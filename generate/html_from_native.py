@@ -2,6 +2,9 @@ import sys
 import os
 
 
+TAB_PIXEL_SIZE = 25
+
+
 # Creates the htmlOutPath file and auto-generates its html contents from the given native source file contents.
 def generateHtmlFromNativeSource(nativeSourcePath, sourceName, htmlOutPath):
 	with open(htmlOutPath, "w") as outFile:
@@ -20,11 +23,18 @@ def generateHtmlFromNativeSource(nativeSourcePath, sourceName, htmlOutPath):
 				for line in lines:
 					lineSplit = line.splitlines()
 					for linePart in lineSplit:
+						tabCount = 0
+						for character in linePart:
+							if (character == '\t'):
+								tabCount += 1
+							else:
+								break;
+						leftPad = tabCount * TAB_PIXEL_SIZE
 						if isFirstLine:
-							outFile.write("\t\t{}\n".format(linePart))
+							outFile.write('\t\t<span style="margin-left: {}px">{}</span>\n'.format(leftPad, linePart))
 							isFirstLine = False
 						else:
-							outFile.write("\t\t<br>{}\n".format(linePart))
+							outFile.write('\t\t<br><span style="margin-left: {}px">{}</span>\n'.format(leftPad, linePart))
 		except FileNotFoundError as error:
 			print("Error: native source file does not exist: {}".format(nativeSourcePath))
 			os.remove(htmlOutPath)

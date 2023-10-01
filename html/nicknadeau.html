@@ -6,125 +6,125 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 	</head>
 	<body>
-		#include "nicknadeau.h"
-		<br>
-		<br>#include <unistd.h>
-		<br>#include <stdlib.h>
-		<br>#include <stdbool.h>
-		<br>#include <stdint.h>
-		<br>#include <limits.h>
-		<br>#include <errno.h>
-		<br>
-		<br>
-		<br>LINK(about)
-		<br>LINK(blog)
-		<br>LINK(github)
-		<br>LINK(native)
-		<br>
-		<br>
-		<br>static void printInstructions() {
-		<br>	printf(
-		<br>		"To display a specific page, write the name of the page and then hit ENTER.\n"
-		<br>		"To list the pages, write 'list' and then hit ENTER.\n"
-		<br>		"To stop running, write 'exit' and then hit ENTER. Or, you know, the good ole CTRL+C.\n"
-		<br>	);
-		<br>}
-		<br>
-		<br>static void list() {
-		<br>	printf(
-		<br>		"\nPages: 'about', 'native', 'github', 'blog [post id]'"
-		<br>		"\n\nNote: the 'post id' of a blog post is the number in square brackets listed on the blog page."
-		<br>		"\nTo view the blog page itself and not a specific post, omit the post id."
-		<br>		"\n"
-		<br>	);
-		<br>}
-		<br>
-		<br>static bool stringEquals(const char *expected, const char *buffer, uint32_t bufferSize) {
-		<br>	uint32_t expectedSize = strlen(expected);
-		<br>	return (expectedSize == bufferSize) && (0 == strncmp(expected, buffer, expectedSize));
-		<br>}
-		<br>
-		<br>static bool stringBeginsWith(const char *prefix, const char *buffer, uint32_t bufferSize) {
-		<br>	uint32_t prefixSize = strlen(prefix);
-		<br>	return (prefixSize <= bufferSize) && (0 == strncmp(prefix, buffer, prefixSize));
-		<br>}
-		<br>
-		<br>static uint32_t getBlogPostId(const char *buffer, uint32_t bufferSize, bool *out_hasId, bool *out_isInvalidId) {
-		<br>	bool hasId = false;
-		<br>	uint32_t prefixSize = strlen("blog");
-		<br>	uint32_t id;
-		<br>	if (prefixSize < bufferSize) {
-		<br>		long value = strtol(buffer + prefixSize, NULL, 10);
-		<br>		if ((LONG_MIN == value) || (LONG_MAX == value)) {
-		<br>			*out_isInvalidId = true;
-		<br>			return 0;
-		<br>		}
-		<br>		id = (uint32_t) value;
-		<br>		hasId = true;
-		<br>	}
-		<br>	*out_hasId = hasId;
-		<br>	return id;
-		<br>}
-		<br>
-		<br>static void displayBlogPost(uint32_t postId) {
-		<br>	printf("Displaying post %u\n", postId);
-		<br>	//TODO implement for real.
-		<br>}
-		<br>
-		<br>static void printPagePreamble(const char *pageName, uint32_t nameLength) {
-		<br>	printf("\n===> Page: %.*s\n\n", nameLength, pageName);
-		<br>}
-		<br>
-		<br>int main(int argc, const char **argv)
-		<br>{
-		<br>	char buffer[BUFSIZ];
-		<br>	printInstructions();
-		<br>	printf("\n# ");
-		<br>	fflush(stdout);
-		<br>	int bytesRead = read(STDIN_FILENO, buffer, BUFSIZ);
-		<br>	while (bytesRead > 0) {
-		<br>		uint32_t bufferSize = bytesRead - 1;
-		<br>		if (BUFSIZ == bytesRead) {
-		<br>			fprintf(stderr, "...What exactly are you trying to do?\n");
-		<br>			return 1;
-		<br>		} else if (stringEquals("exit", buffer, bufferSize)) {
-		<br>			return 0;
-		<br>		} else if (stringEquals("list", buffer, bufferSize)) {
-		<br>			list();
-		<br>		} else if (stringEquals("about", buffer, bufferSize)) {
-		<br>			printPagePreamble(buffer, bufferSize);
-		<br>			about();
-		<br>		} else if (stringEquals("native", buffer, bufferSize)) {
-		<br>			printPagePreamble(buffer, bufferSize);
-		<br>			native();
-		<br>		} else if (stringEquals("github", buffer, bufferSize)) {
-		<br>			printPagePreamble(buffer, bufferSize);
-		<br>			github();
-		<br>		} else if (stringBeginsWith("blog", buffer, bufferSize)) {
-		<br>			bool hasId = false;
-		<br>			bool isInvalidId = false;
-		<br>			uint32_t postId = getBlogPostId(buffer, bufferSize, &hasId, &isInvalidId);
-		<br>			if (isInvalidId) {
-		<br>				fprintf(stderr, "Invalid 'post id' given. Must be an integer.\n");
-		<br>			} else if (hasId) {
-		<br>				displayBlogPost(postId);
-		<br>			} else {
-		<br>				printPagePreamble(buffer, bufferSize);
-		<br>				blog();
-		<br>			}
-		<br>		} else {
-		<br>			printInstructions();
-		<br>		}
-		<br>		printf("\n# ");
-		<br>		fflush(stdout);
-		<br>		bytesRead = read(STDIN_FILENO, buffer, BUFSIZ);
-		<br>	}
-		<br>	if (0 == bytesRead) {
-		<br>		fprintf(stderr, "**Exiting -> stdin was closed!\n");
-		<br>	} else {
-		<br>		fprintf(stderr, "**Exiting -> error reading stdin! errno=%d\n", errno);
-		<br>	}
-		<br>	return 1;
-		<br>}
+		<span style="margin-left: 0px">#include "nicknadeau.h"</span>
+		<br><span style="margin-left: 0px"></span>
+		<br><span style="margin-left: 0px">#include <unistd.h></span>
+		<br><span style="margin-left: 0px">#include <stdlib.h></span>
+		<br><span style="margin-left: 0px">#include <stdbool.h></span>
+		<br><span style="margin-left: 0px">#include <stdint.h></span>
+		<br><span style="margin-left: 0px">#include <limits.h></span>
+		<br><span style="margin-left: 0px">#include <errno.h></span>
+		<br><span style="margin-left: 0px"></span>
+		<br><span style="margin-left: 0px"></span>
+		<br><span style="margin-left: 0px">LINK(about)</span>
+		<br><span style="margin-left: 0px">LINK(blog)</span>
+		<br><span style="margin-left: 0px">LINK(github)</span>
+		<br><span style="margin-left: 0px">LINK(native)</span>
+		<br><span style="margin-left: 0px"></span>
+		<br><span style="margin-left: 0px"></span>
+		<br><span style="margin-left: 0px">static void printInstructions() {</span>
+		<br><span style="margin-left: 25px">	printf(</span>
+		<br><span style="margin-left: 50px">		"To display a specific page, write the name of the page and then hit ENTER.\n"</span>
+		<br><span style="margin-left: 50px">		"To list the pages, write 'list' and then hit ENTER.\n"</span>
+		<br><span style="margin-left: 50px">		"To stop running, write 'exit' and then hit ENTER. Or, you know, the good ole CTRL+C.\n"</span>
+		<br><span style="margin-left: 25px">	);</span>
+		<br><span style="margin-left: 0px">}</span>
+		<br><span style="margin-left: 0px"></span>
+		<br><span style="margin-left: 0px">static void list() {</span>
+		<br><span style="margin-left: 25px">	printf(</span>
+		<br><span style="margin-left: 50px">		"\nPages: 'about', 'native', 'github', 'blog [post id]'"</span>
+		<br><span style="margin-left: 50px">		"\n\nNote: the 'post id' of a blog post is the number in square brackets listed on the blog page."</span>
+		<br><span style="margin-left: 50px">		"\nTo view the blog page itself and not a specific post, omit the post id."</span>
+		<br><span style="margin-left: 50px">		"\n"</span>
+		<br><span style="margin-left: 25px">	);</span>
+		<br><span style="margin-left: 0px">}</span>
+		<br><span style="margin-left: 0px"></span>
+		<br><span style="margin-left: 0px">static bool stringEquals(const char *expected, const char *buffer, uint32_t bufferSize) {</span>
+		<br><span style="margin-left: 25px">	uint32_t expectedSize = strlen(expected);</span>
+		<br><span style="margin-left: 25px">	return (expectedSize == bufferSize) && (0 == strncmp(expected, buffer, expectedSize));</span>
+		<br><span style="margin-left: 0px">}</span>
+		<br><span style="margin-left: 0px"></span>
+		<br><span style="margin-left: 0px">static bool stringBeginsWith(const char *prefix, const char *buffer, uint32_t bufferSize) {</span>
+		<br><span style="margin-left: 25px">	uint32_t prefixSize = strlen(prefix);</span>
+		<br><span style="margin-left: 25px">	return (prefixSize <= bufferSize) && (0 == strncmp(prefix, buffer, prefixSize));</span>
+		<br><span style="margin-left: 0px">}</span>
+		<br><span style="margin-left: 0px"></span>
+		<br><span style="margin-left: 0px">static uint32_t getBlogPostId(const char *buffer, uint32_t bufferSize, bool *out_hasId, bool *out_isInvalidId) {</span>
+		<br><span style="margin-left: 25px">	bool hasId = false;</span>
+		<br><span style="margin-left: 25px">	uint32_t prefixSize = strlen("blog");</span>
+		<br><span style="margin-left: 25px">	uint32_t id;</span>
+		<br><span style="margin-left: 25px">	if (prefixSize < bufferSize) {</span>
+		<br><span style="margin-left: 50px">		long value = strtol(buffer + prefixSize, NULL, 10);</span>
+		<br><span style="margin-left: 50px">		if ((LONG_MIN == value) || (LONG_MAX == value)) {</span>
+		<br><span style="margin-left: 75px">			*out_isInvalidId = true;</span>
+		<br><span style="margin-left: 75px">			return 0;</span>
+		<br><span style="margin-left: 50px">		}</span>
+		<br><span style="margin-left: 50px">		id = (uint32_t) value;</span>
+		<br><span style="margin-left: 50px">		hasId = true;</span>
+		<br><span style="margin-left: 25px">	}</span>
+		<br><span style="margin-left: 25px">	*out_hasId = hasId;</span>
+		<br><span style="margin-left: 25px">	return id;</span>
+		<br><span style="margin-left: 0px">}</span>
+		<br><span style="margin-left: 0px"></span>
+		<br><span style="margin-left: 0px">static void displayBlogPost(uint32_t postId) {</span>
+		<br><span style="margin-left: 25px">	printf("Displaying post %u\n", postId);</span>
+		<br><span style="margin-left: 25px">	//TODO implement for real.</span>
+		<br><span style="margin-left: 0px">}</span>
+		<br><span style="margin-left: 0px"></span>
+		<br><span style="margin-left: 0px">static void printPagePreamble(const char *pageName, uint32_t nameLength) {</span>
+		<br><span style="margin-left: 25px">	printf("\n===> Page: %.*s\n\n", nameLength, pageName);</span>
+		<br><span style="margin-left: 0px">}</span>
+		<br><span style="margin-left: 0px"></span>
+		<br><span style="margin-left: 0px">int main(int argc, const char **argv)</span>
+		<br><span style="margin-left: 0px">{</span>
+		<br><span style="margin-left: 25px">	char buffer[BUFSIZ];</span>
+		<br><span style="margin-left: 25px">	printInstructions();</span>
+		<br><span style="margin-left: 25px">	printf("\n# ");</span>
+		<br><span style="margin-left: 25px">	fflush(stdout);</span>
+		<br><span style="margin-left: 25px">	int bytesRead = read(STDIN_FILENO, buffer, BUFSIZ);</span>
+		<br><span style="margin-left: 25px">	while (bytesRead > 0) {</span>
+		<br><span style="margin-left: 50px">		uint32_t bufferSize = bytesRead - 1;</span>
+		<br><span style="margin-left: 50px">		if (BUFSIZ == bytesRead) {</span>
+		<br><span style="margin-left: 75px">			fprintf(stderr, "...What exactly are you trying to do?\n");</span>
+		<br><span style="margin-left: 75px">			return 1;</span>
+		<br><span style="margin-left: 50px">		} else if (stringEquals("exit", buffer, bufferSize)) {</span>
+		<br><span style="margin-left: 75px">			return 0;</span>
+		<br><span style="margin-left: 50px">		} else if (stringEquals("list", buffer, bufferSize)) {</span>
+		<br><span style="margin-left: 75px">			list();</span>
+		<br><span style="margin-left: 50px">		} else if (stringEquals("about", buffer, bufferSize)) {</span>
+		<br><span style="margin-left: 75px">			printPagePreamble(buffer, bufferSize);</span>
+		<br><span style="margin-left: 75px">			about();</span>
+		<br><span style="margin-left: 50px">		} else if (stringEquals("native", buffer, bufferSize)) {</span>
+		<br><span style="margin-left: 75px">			printPagePreamble(buffer, bufferSize);</span>
+		<br><span style="margin-left: 75px">			native();</span>
+		<br><span style="margin-left: 50px">		} else if (stringEquals("github", buffer, bufferSize)) {</span>
+		<br><span style="margin-left: 75px">			printPagePreamble(buffer, bufferSize);</span>
+		<br><span style="margin-left: 75px">			github();</span>
+		<br><span style="margin-left: 50px">		} else if (stringBeginsWith("blog", buffer, bufferSize)) {</span>
+		<br><span style="margin-left: 75px">			bool hasId = false;</span>
+		<br><span style="margin-left: 75px">			bool isInvalidId = false;</span>
+		<br><span style="margin-left: 75px">			uint32_t postId = getBlogPostId(buffer, bufferSize, &hasId, &isInvalidId);</span>
+		<br><span style="margin-left: 75px">			if (isInvalidId) {</span>
+		<br><span style="margin-left: 100px">				fprintf(stderr, "Invalid 'post id' given. Must be an integer.\n");</span>
+		<br><span style="margin-left: 75px">			} else if (hasId) {</span>
+		<br><span style="margin-left: 100px">				displayBlogPost(postId);</span>
+		<br><span style="margin-left: 75px">			} else {</span>
+		<br><span style="margin-left: 100px">				printPagePreamble(buffer, bufferSize);</span>
+		<br><span style="margin-left: 100px">				blog();</span>
+		<br><span style="margin-left: 75px">			}</span>
+		<br><span style="margin-left: 50px">		} else {</span>
+		<br><span style="margin-left: 75px">			printInstructions();</span>
+		<br><span style="margin-left: 50px">		}</span>
+		<br><span style="margin-left: 50px">		printf("\n# ");</span>
+		<br><span style="margin-left: 50px">		fflush(stdout);</span>
+		<br><span style="margin-left: 50px">		bytesRead = read(STDIN_FILENO, buffer, BUFSIZ);</span>
+		<br><span style="margin-left: 25px">	}</span>
+		<br><span style="margin-left: 25px">	if (0 == bytesRead) {</span>
+		<br><span style="margin-left: 50px">		fprintf(stderr, "**Exiting -> stdin was closed!\n");</span>
+		<br><span style="margin-left: 25px">	} else {</span>
+		<br><span style="margin-left: 50px">		fprintf(stderr, "**Exiting -> error reading stdin! errno=%d\n", errno);</span>
+		<br><span style="margin-left: 25px">	}</span>
+		<br><span style="margin-left: 25px">	return 1;</span>
+		<br><span style="margin-left: 0px">}</span>
 	</body>
 </html>
