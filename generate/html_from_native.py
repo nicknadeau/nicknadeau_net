@@ -13,11 +13,18 @@ def generateHtmlFromNativeSource(nativeSourcePath, sourceName, htmlOutPath):
 		outFile.write('\t\t<meta name="viewport" content="width=device-width, initial-scale=1">\n')
 		outFile.write('\t</head>\n')
 		outFile.write('\t<body>\n')
+		isFirstLine = True
 		try:
 			with open(nativeSourcePath, "r") as sourceFile:
 				lines = sourceFile.readlines()
 				for line in lines:
-					outFile.write(line)
+					lineSplit = line.splitlines()
+					for linePart in lineSplit:
+						if isFirstLine:
+							outFile.write("\t\t{}\n".format(linePart))
+							isFirstLine = False
+						else:
+							outFile.write("\t\t<br>{}\n".format(linePart))
 		except FileNotFoundError as error:
 			print("Error: native source file does not exist: {}".format(nativeSourcePath))
 			os.remove(htmlOutPath)
