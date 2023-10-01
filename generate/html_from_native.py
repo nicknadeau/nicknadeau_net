@@ -14,8 +14,8 @@ def generateHtmlFromNativeSource(nativeSourcePath, sourceName, htmlOutPath):
 		outFile.write('\t\t<title>Nick Nadeau - {}</title>\n'.format(sourceName))
 		outFile.write('\t\t<meta name="description" content="Nick Nadeau\'s {} page.">\n'.format(sourceName))
 		outFile.write('\t\t<meta name="viewport" content="width=device-width, initial-scale=1">\n')
-		outFile.write('\t\t<link href="https://fonts.googleapis.com/css?family=Cutive Mono" rel="stylesheet">')
-		outFile.write('\t\t<link href="/styles/style-main.css" rel="stylesheet">')
+		outFile.write('\t\t<link href="https://fonts.googleapis.com/css?family=Cutive Mono" rel="stylesheet">\n')
+		outFile.write('\t\t<link href="/styles/style-main.css" rel="stylesheet">\n')
 		outFile.write('\t</head>\n')
 		outFile.write('\t<body>\n')
 		isFirstLine = True
