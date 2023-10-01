@@ -18,3 +18,16 @@ To run the site-as-commandline binary, either execute the binary directly or:
 ```shell
 make clean run
 ```
+
+## Auto-generating HTML From Native Source
+The site is defined as a collection of compilable C source files that can be run on the commandline. It would just be wasteful and error-prone to rewrite them as HTML for the web too. Instead, we just auto-generate the HTML from the C files.
+
+To generate an HTML file from a C file simply run:
+```shell
+python3 generate/html_from_native.py <source-path>
+```
+
+Example:
+```shell
+python3 generate/html_from_native.py src/native/about.c
+```
