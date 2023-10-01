@@ -14,6 +14,8 @@ def generateHtmlFromNativeSource(nativeSourcePath, sourceName, htmlOutPath):
 		outFile.write('\t\t<title>Nick Nadeau - {}</title>\n'.format(sourceName))
 		outFile.write('\t\t<meta name="description" content="Nick Nadeau\'s {} page.">\n'.format(sourceName))
 		outFile.write('\t\t<meta name="viewport" content="width=device-width, initial-scale=1">\n')
+		outFile.write('\t\t<link href="https://fonts.googleapis.com/css?family=Cutive Mono" rel="stylesheet">')
+		outFile.write('\t\t<link href="/styles/style-main.css" rel="stylesheet">')
 		outFile.write('\t</head>\n')
 		outFile.write('\t<body>\n')
 		isFirstLine = True
@@ -31,10 +33,10 @@ def generateHtmlFromNativeSource(nativeSourcePath, sourceName, htmlOutPath):
 								break;
 						leftPad = tabCount * TAB_PIXEL_SIZE
 						if isFirstLine:
-							outFile.write('\t\t<span style="margin-left: {}px">{}</span>\n'.format(leftPad, linePart))
+							outFile.write('\t\t<span class="cutive-mono-16" style="margin-left: {}px">{}</span>\n'.format(leftPad, linePart))
 							isFirstLine = False
 						else:
-							outFile.write('\t\t<br><span style="margin-left: {}px">{}</span>\n'.format(leftPad, linePart))
+							outFile.write('\t\t<br><span class="cutive-mono-16" style="margin-left: {}px">{}</span>\n'.format(leftPad, linePart))
 		except FileNotFoundError as error:
 			print("Error: native source file does not exist: {}".format(nativeSourcePath))
 			os.remove(htmlOutPath)

@@ -5,6 +5,7 @@ TARBALL=website.tar.gz
 WEB_ROOT_NAME=web_root
 WEB_ROOT="$SCRIPT_DIR"/"$WEB_ROOT_NAME"
 HTML="$SCRIPT_DIR"/html
+STYLES="$SCRIPT_DIR"/styles
 
 
 function panicIfLastCommandFailed() {
@@ -24,6 +25,7 @@ fi
 rm -rf "$WEB_ROOT" && \
 	mkdir -p "$WEB_ROOT" && \
 	cp -r "$HTML"/* "$WEB_ROOT" && \
+	cp -r "$STYLES" "$WEB_ROOT" && \
 	true
 panicIfLastCommandFailed "Error: failed to package web assets!"
 
