@@ -31,3 +31,10 @@ Example:
 ```shell
 python3 generate/html_from_native.py src/native/about.c
 ```
+
+## Packaging Website
+To package the web frontend code up into a directory to be hosted out of, as well as a tarball, run:
+
+```shell
+make clean pack
+```
