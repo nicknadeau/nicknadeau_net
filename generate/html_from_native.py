@@ -16,14 +16,25 @@ def getNumLeadingTabs(line):
 	return tabCount
 
 
+# Returns true if the given token is a compiler directive
+def isCompilerDirective(token):
+	return token.startswith("#")
+
+
 '''
 Returns the same line of native code except with HTML+CSS formatting so that it renders correctly on the web.
 Note: this will not provide a font style and it will not add any left margins for tabs. This only focuses on displaying the line contents
 in this isolated context correctly.
 '''
 def formatNativeCodeLine(line):
-	#TODO: actually style the line contents.
-	return line
+	formattedLine = ""
+	tokens = line.split()
+	for token in tokens:
+		if (isCompilerDirective(token)):
+			formattedLine += '<span class="compiler-directive">{}</span> '.format(token)
+		else:
+			formattedLine += '{} '.format(token)
+	return formattedLine
 
 
 # Creates the htmlOutPath file and auto-generates its html contents from the given native source file contents.

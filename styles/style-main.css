@@ -13,3 +13,7 @@
 	font-weight: 400;
 	line-height: normal;
 }
+
+.compiler-directive {
+	color: #087BAC;
+}
