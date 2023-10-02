@@ -5,6 +5,27 @@ import os
 TAB_PIXEL_SIZE = 25
 
 
+# Returns the number of leading tab characters in the line. (eg. \t\to\t would return 2 not 3).
+def getNumLeadingTabs(line):
+	tabCount = 0
+	for character in line:
+		if (character == '\t'):
+			tabCount += 1
+		else:
+			break;
+	return tabCount
+
+
+'''
+Returns the same line of native code except with HTML+CSS formatting so that it renders correctly on the web.
+Note: this will not provide a font style and it will not add any left margins for tabs. This only focuses on displaying the line contents
+in this isolated context correctly.
+'''
+def formatNativeCodeLine(line):
+	#TODO: actually style the line contents.
+	return line
+
+
 # Creates the htmlOutPath file and auto-generates its html contents from the given native source file contents.
 def generateHtmlFromNativeSource(nativeSourcePath, sourceName, htmlOutPath):
 	with open(htmlOutPath, "w") as outFile:
@@ -23,20 +44,19 @@ def generateHtmlFromNativeSource(nativeSourcePath, sourceName, htmlOutPath):
 			with open(nativeSourcePath, "r") as sourceFile:
 				lines = sourceFile.readlines()
 				for line in lines:
+					# Split the line on newline delimiters.
 					lineSplit = line.splitlines()
 					for linePart in lineSplit:
-						tabCount = 0
-						for character in linePart:
-							if (character == '\t'):
-								tabCount += 1
-							else:
-								break;
+						# Count the number of leading tabs in this part of the line. This determines how much left padding to add to give the appearance of tabs.
+						tabCount = getNumLeadingTabs(linePart)
 						leftPad = tabCount * TAB_PIXEL_SIZE
+						# Re-format the line for HTML so that it looks proper.
+						formattedLinePart = formatNativeCodeLine(linePart)
 						if isFirstLine:
-							outFile.write('\t\t<span class="cutive-mono-16" style="margin-left: {}px">{}</span>\n'.format(leftPad, linePart))
+							outFile.write('\t\t<span class="cutive-mono-16" style="margin-left: {}px">{}</span>\n'.format(leftPad, formattedLinePart))
 							isFirstLine = False
 						else:
-							outFile.write('\t\t<br><span class="cutive-mono-16" style="margin-left: {}px">{}</span>\n'.format(leftPad, linePart))
+							outFile.write('\t\t<br><span class="cutive-mono-16" style="margin-left: {}px">{}</span>\n'.format(leftPad, formattedLinePart))
 		except FileNotFoundError as error:
 			print("Error: native source file does not exist: {}".format(nativeSourcePath))
 			os.remove(htmlOutPath)
