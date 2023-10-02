@@ -22,14 +22,9 @@ make clean run
 ## Auto-generating HTML From Native Source
 The site is defined as a collection of compilable C source files that can be run on the commandline. It would just be wasteful and error-prone to rewrite them as HTML for the web too. Instead, we just auto-generate the HTML from the C files.
 
-To generate an HTML file from a C file simply run:
+To generate all our HTML files from all our C files simply run:
 ```shell
-python3 generate/html_from_native.py <source-path>
-```
-
-Example:
-```shell
-python3 generate/html_from_native.py src/native/about.c
+make clean generate-html
 ```
 
 ## Packaging Website
@@ -37,4 +32,10 @@ To package the web frontend code up into a directory to be hosted out of, as wel
 
 ```shell
 make clean pack
+```
+
+## Putting It All Together
+We can compile our C source, generate all of the corresponding HTML files from it, and then pack up our web contents by simply running:
+```shell
+make clean all
 ```

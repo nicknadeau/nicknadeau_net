@@ -2,3 +2,5 @@
 *.tar.gz
 nicknadeau
 web_root
+
+__pycache__
