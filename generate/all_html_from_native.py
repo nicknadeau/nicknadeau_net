@@ -1,6 +1,6 @@
 import sys
 import os
-from html_from_native import *
+from html_from_native import generateHtmlFromNativeSource
 
 
 '''
@@ -11,9 +11,9 @@ def generateAllHtmlFromNativeSources(sourceRoot, outRoot):
 	for filename in os.listdir(sourceRoot):
 		filepath = os.path.join(sourceRoot, filename)
 		if (os.path.isfile(filepath) and filename.endswith(".c")):
-			filenameNoExt = os.path.splitext(filename)[0]
-			outPath = os.path.join(outRoot, "{}.html".format(filenameNoExt))
-			generateHtmlFromNativeSource(filepath, filenameNoExt, outPath)
+			ret = generateHtmlFromNativeSource(filepath, outRoot)
+			if (ret != 0):
+				return ret
 		elif (os.path.isdir(filepath)):
 			if (filename != "include"):
 				# Recursively call back into ourselves for this new directory.
@@ -21,10 +21,15 @@ def generateAllHtmlFromNativeSources(sourceRoot, outRoot):
 				newOutRoot = os.path.join(outRoot, filename)
 				if not os.path.exists(newOutRoot):
 					os.mkdir(newOutRoot)
-				generateAllHtmlFromNativeSources(newSourceRoot, newOutRoot)
+				ret = generateAllHtmlFromNativeSources(newSourceRoot, newOutRoot)
+				if (ret != 0):
+					return ret
+	return 0
 
 
-# Generates the index.html file and writes it to the given outRoot. It will automatically redirect to the /about.html file.
+'''
+Generates the index.html file and writes it to the given outRoot. It will automatically redirect to the /about.html file.
+'''
 def generateRedirectIndexHtml(outRoot):
 	index = os.path.join(outRoot, "index.html")
 	with open(index, "w") as indexFile:
@@ -61,8 +66,11 @@ if __name__ == '__main__':
 			generateRedirectIndexHtml(outRoot)
 
 		print("Generating ALL html files from the native source files at {} ...".format(sourceRoot))
-		generateAllHtmlFromNativeSources(sourceRoot, outRoot)
-		print("Successfully generated ALL html files from native sources: {}".format(outRoot))
+		ret = generateAllHtmlFromNativeSources(sourceRoot, outRoot)
+		if (ret == 0):
+			print("Successfully generated ALL html files from native sources -> {}".format(outRoot))
+		else:
+			exit(ret)
 	else:
 		print("USAGE: python3 {} <source-dir> <out-dir>".format(sys.argv[0]), file=sys.stderr)
 		exit(1)

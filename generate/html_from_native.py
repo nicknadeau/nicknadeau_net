@@ -5,7 +5,9 @@ import os
 TAB_PIXEL_SIZE = 25
 
 
-# Returns the number of leading tab characters in the line. (eg. \t\to\t would return 2 not 3).
+'''
+Returns the number of leading tab characters in the line. (eg. \t\to\t would return 2 not 3).
+'''
 def getNumLeadingTabs(line):
 	tabCount = 0
 	for character in line:
@@ -16,7 +18,9 @@ def getNumLeadingTabs(line):
 	return tabCount
 
 
-# Returns true if the given token is a compiler directive
+'''
+Returns true if the given token is a compiler directive
+'''
 def isCompilerDirective(token):
 	return token.startswith("#")
 
@@ -37,8 +41,10 @@ def formatNativeCodeLine(line):
 	return formattedLine
 
 
-# Creates the htmlOutPath file and auto-generates its html contents from the given native source file contents.
-def generateHtmlFromNativeSource(nativeSourcePath, sourceName, htmlOutPath):
+'''
+Creates the htmlOutPath file and auto-generates its html contents from the given native source file contents.
+'''
+def generateHtml(nativeSourcePath, sourceName, htmlOutPath):
 	with open(htmlOutPath, "w") as outFile:
 		outFile.write('<!DOCTYPE html>\n')
 		outFile.write('<html>\n')
@@ -71,32 +77,47 @@ def generateHtmlFromNativeSource(nativeSourcePath, sourceName, htmlOutPath):
 		except FileNotFoundError as error:
 			print("Error: native source file does not exist: {}".format(nativeSourcePath))
 			os.remove(htmlOutPath)
-			exit(1)
+			return 1
 		outFile.write('\t</body>\n')
 		outFile.write('</html>\n')
+		return 0
+
+
+'''
+Generates an html file from the given native source file and writes it to outDir with the same name as the source file but with extension .html.
+Returns 0 on success and 1 on failure. Prints its own error messages.
+'''
+def generateHtmlFromNativeSource(nativeSourceFile, outDir):
+	if not os.path.exists(nativeSourceFile):
+		print("Error: native source input file does not exist: {}".format(nativeSourceFile))
+		return 1
+	if not os.path.isdir(outDir):
+		print("Error: HTML out directory does not exist: {}".format(outDir))
+		return 1
+
+	# Get the absolute path of the source file, ensure it is a .c file and then strip its extension off.
+	absSourcePath = os.path.abspath(nativeSourceFile);
+	sourceFilename = os.path.basename(absSourcePath);
+	sourceExtSplit = os.path.splitext(sourceFilename)
+	sourceExtension = sourceExtSplit[1]
+	if (sourceExtension != '.c'):
+		print("Error: native source file must be a .c file but found extension: {}".format(sourceExtension), file=sys.stderr)
+		return 1
+	sourceName = sourceExtSplit[0]
+
+	# Create the html file using the same name as the source file but with the .html extension instead. Then generate the html.
+	outFile = os.path.join(outDir, "{}.html".format(sourceName))
+	print("Generating {} from native source file {}".format(outFile, absSourcePath))
+	return generateHtml(absSourcePath, sourceName, outFile)
 
 
 if __name__ == '__main__':
-	if (len(sys.argv) == 2):
-		# Get the absolute path of the repo we are in.
-		absProgramPath = os.path.abspath(sys.argv[0])
-		repoRoot = os.path.dirname(os.path.dirname(absProgramPath))
-
-		# Get the name of the source file (extension stripped) and verify it is a .c file.
-		absSourcePath = os.path.abspath(sys.argv[1]);
-		sourceFilename = os.path.basename(absSourcePath);
-		sourceExtSplit = os.path.splitext(sourceFilename)
-		sourceExtension = sourceExtSplit[1]
-		if (sourceExtension != '.c'):
-			print("Error: native source file must be a .c file but found extension: {}".format(sourceExtension), file=sys.stderr)
-			exit(1)
-		sourceName = sourceExtSplit[0]
-
-		# Create the html output file we will generate.
-		outPath = os.path.join(repoRoot, "html", "{}.html".format(sourceName))
-		print("Generating html from given native source file...".format(outPath))
-		generateHtmlFromNativeSource(absSourcePath, sourceName, outPath)
-		print("Successfully generated html from native source: {}".format(outPath))
+	if (len(sys.argv) == 3):
+		ret = generateHtmlFromNativeSource(sys.argv[1], sys.argv[2])
+		if (ret == 0):
+			print("Successfully generated html file!")
+		else:
+			exit(ret)
 	else:
-		print("USAGE: python3 {} <native-src-file>".format(sys.argv[0]), file=sys.stderr)
+		print("USAGE: python3 {} <native-src-file> <html-out-dir>".format(sys.argv[0]), file=sys.stderr)
 		exit(1)
