@@ -17,3 +17,7 @@
 .compiler-directive {
 	color: #087BAC;
 }
+
+.c-keyword {
+	color: #1CA510;
+}

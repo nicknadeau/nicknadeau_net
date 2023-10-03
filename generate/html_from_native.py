@@ -3,6 +3,9 @@ import os
 
 
 TAB_PIXEL_SIZE = 25
+KEYWORDS = """auto const double float int short struct unsigned break continue else for long signed switch void case default enum goto register
+	sizeof typedef volatile char do extern if return static union while bool int8_t uint8_t int16_t uint16_t int32_t uint32_t int64_t uint64_t
+	""".split()
 
 
 '''
@@ -19,10 +22,17 @@ def getNumLeadingTabs(line):
 
 
 '''
-Returns true if the given token is a compiler directive
+Returns true if the given token is a compiler directive.
 '''
 def isCompilerDirective(token):
 	return token.startswith("#")
+
+
+'''
+Returns true if the given token is a C keyword.
+'''
+def isKeyword(token):
+	return token in KEYWORDS
 
 
 '''
@@ -36,6 +46,8 @@ def formatNativeCodeLine(line):
 	for token in tokens:
 		if (isCompilerDirective(token)):
 			formattedLine += '<span class="compiler-directive">{}</span> '.format(token)
+		elif (isKeyword(token)):
+			formattedLine += '<span class="c-keyword">{}</span> '.format(token)
 		else:
 			formattedLine += '{} '.format(token)
 	return formattedLine
