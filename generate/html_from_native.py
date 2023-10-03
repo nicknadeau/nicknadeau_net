@@ -9,6 +9,24 @@ KEYWORDS = """auto const double float int short struct unsigned break continue e
 
 
 '''
+A simple object which tracks the formatting state.
+'''
+class FormatState:
+	def __init__(self):
+		self.isEscaped = False
+		self.isInString = False
+
+
+'''
+The result of updating the format state.
+'''
+class UpdateFormatStateResult:
+	def __init__(self):
+		self.isStringStart = False
+		self.isStringEnd = False
+
+
+'''
 Returns the number of leading tab characters in the line. (eg. \t\to\t would return 2 not 3).
 '''
 def getNumLeadingTabs(line):
@@ -24,15 +42,48 @@ def getNumLeadingTabs(line):
 '''
 Returns true if the given token is a compiler directive.
 '''
-def isCompilerDirective(token):
-	return token.startswith("#")
+def isCompilerDirective(state, token):
+	return (not state.isEscaped) and (not state.isInString) and token.startswith("#")
 
 
 '''
 Returns true if the given token is a C keyword.
 '''
-def isKeyword(token):
-	return token in KEYWORDS
+def isKeyword(state, token):
+	return (not state.isInString) and (token in KEYWORDS)
+
+
+'''
+Updates the format state given the next character.
+'''
+def updateFormatState(state, character):
+	updateResult = UpdateFormatStateResult()
+	escape = False
+	if not state.isEscaped:
+		if character == '\\':
+			escape = True
+		elif character == '"':
+			state.isInString = (not state.isInString)
+			updateResult.isStringStart = state.isInString
+			updateResult.isStringEnd = not state.isInString
+	state.isEscaped = escape
+	return updateResult
+
+
+'''
+Returns the same token of native code except with HTML+CSS formatting so that it renders correctly on the web.
+'''
+def formatNativeCodeToken(state, token):
+	formattedToken = ""
+	for character in token:
+		result = updateFormatState(state, character)
+		if result.isStringStart:
+			formattedToken += '<span class="c-string">{}'.format(character)
+		elif result.isStringEnd:
+			formattedToken += '{}</span>'.format(character)
+		else:
+			formattedToken += character
+	return formattedToken
 
 
 '''
@@ -40,16 +91,18 @@ Returns the same line of native code except with HTML+CSS formatting so that it 
 Note: this will not provide a font style and it will not add any left margins for tabs. This only focuses on displaying the line contents
 in this isolated context correctly.
 '''
-def formatNativeCodeLine(line):
+def formatNativeCodeLine(state, line):
 	formattedLine = ""
 	tokens = line.split()
-	for token in tokens:
-		if (isCompilerDirective(token)):
-			formattedLine += '<span class="compiler-directive">{}</span> '.format(token)
-		elif (isKeyword(token)):
-			formattedLine += '<span class="c-keyword">{}</span> '.format(token)
+	for i in range(0, len(tokens)):
+		token = tokens[i]
+		formattedToken = formatNativeCodeToken(state, token);
+		if (isCompilerDirective(state, token)):
+			formattedLine += '<span class="compiler-directive">{}</span>{}'.format(formattedToken, ' ' if (i < len(tokens) - 1) else '')
+		elif (isKeyword(state, token)):
+			formattedLine += '<span class="c-keyword">{}</span>{}'.format(formattedToken, ' ' if (i < len(tokens) - 1) else '')
 		else:
-			formattedLine += '{} '.format(token)
+			formattedLine += '{}{}'.format(formattedToken, ' ' if (i < len(tokens) - 1) else '')
 	return formattedLine
 
 
@@ -57,6 +110,7 @@ def formatNativeCodeLine(line):
 Creates the htmlOutPath file and auto-generates its html contents from the given native source file contents.
 '''
 def generateHtml(nativeSourcePath, sourceName, htmlOutPath):
+	state = FormatState()
 	with open(htmlOutPath, "w") as outFile:
 		outFile.write('<!DOCTYPE html>\n')
 		outFile.write('<html>\n')
@@ -80,7 +134,7 @@ def generateHtml(nativeSourcePath, sourceName, htmlOutPath):
 						tabCount = getNumLeadingTabs(linePart)
 						leftPad = tabCount * TAB_PIXEL_SIZE
 						# Re-format the line for HTML so that it looks proper.
-						formattedLinePart = formatNativeCodeLine(linePart)
+						formattedLinePart = formatNativeCodeLine(state, linePart)
 						if isFirstLine:
 							outFile.write('\t\t<span class="cutive-mono-16" style="margin-left: {}px">{}</span>\n'.format(leftPad, formattedLinePart))
 							isFirstLine = False
