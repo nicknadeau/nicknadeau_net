@@ -54,17 +54,16 @@ def isKeyword(state, token):
 
 
 '''
-Returns true if the given token is a hyperlink. We specify these with special syntax using the LINK macro or by typing the url out raw.
+Returns true if the given token is a special LINK macro.
 '''
-def isHyperlink(state, token):
-	#TODO add raw url awarneness
+def isLinkMacro(state, token):
 	return (not state.isEscaped) and (not state.isInString) and token.startswith("LINK(") and token.endswith(")")
 
 
 '''
-Returns the URL of the hyperlink the token should be linked to.
+Returns the URL that the link macro should open when clicked.
 '''
-def getHyperlinkURL(token):
+def getLinkMacroURL(token):
 	return "/" + token[5:-1] + ".html"
 
 
@@ -116,8 +115,8 @@ def formatNativeCodeLine(state, line):
 			formattedLine += '<span class="compiler-directive">{}</span>{}'.format(formattedToken, ' ' if (i < len(tokens) - 1) else '')
 		elif (isKeyword(state, token)):
 			formattedLine += '<span class="c-keyword">{}</span>{}'.format(formattedToken, ' ' if (i < len(tokens) - 1) else '')
-		elif (isHyperlink(state, token)):
-			url = getHyperlinkURL(token)
+		elif (isLinkMacro(state, token)):
+			url = getLinkMacroURL(token)
 			formattedLine += '<a href="{}">{}</a>{}'.format(url, formattedToken, ' ' if (i < len(tokens) - 1) else '')
 		else:
 			formattedLine += '{}{}'.format(formattedToken, ' ' if (i < len(tokens) - 1) else '')
