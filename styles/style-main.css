@@ -1,3 +1,13 @@
+a {
+	text-decoration: none;
+	font-weight: bold;
+	color: #AD1010;
+}
+
+a:hover {
+	color: #000000;
+}
+
 .cutive-mono-18 {
 	font-family: Cutive Mono;
 	font-size: 18px;

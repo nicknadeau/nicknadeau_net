@@ -54,6 +54,21 @@ def isKeyword(state, token):
 
 
 '''
+Returns true if the given token is a hyperlink. We specify these with special syntax using the LINK macro or by typing the url out raw.
+'''
+def isHyperlink(state, token):
+	#TODO add raw url awarneness
+	return (not state.isEscaped) and (not state.isInString) and token.startswith("LINK(") and token.endswith(")")
+
+
+'''
+Returns the URL of the hyperlink the token should be linked to.
+'''
+def getHyperlinkURL(token):
+	return "/" + token[5:-1] + ".html"
+
+
+'''
 Updates the format state given the next character.
 '''
 def updateFormatState(state, character):
@@ -101,6 +116,9 @@ def formatNativeCodeLine(state, line):
 			formattedLine += '<span class="compiler-directive">{}</span>{}'.format(formattedToken, ' ' if (i < len(tokens) - 1) else '')
 		elif (isKeyword(state, token)):
 			formattedLine += '<span class="c-keyword">{}</span>{}'.format(formattedToken, ' ' if (i < len(tokens) - 1) else '')
+		elif (isHyperlink(state, token)):
+			url = getHyperlinkURL(token)
+			formattedLine += '<a href="{}">{}</a>{}'.format(url, formattedToken, ' ' if (i < len(tokens) - 1) else '')
 		else:
 			formattedLine += '{}{}'.format(formattedToken, ' ' if (i < len(tokens) - 1) else '')
 	return formattedLine
