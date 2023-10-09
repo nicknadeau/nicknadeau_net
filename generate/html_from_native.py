@@ -9,21 +9,24 @@ KEYWORDS = """auto const double float int short struct unsigned break continue e
 
 
 '''
-A simple object which tracks the formatting state.
+A simple object which tracks the formatting state. This is long-lived state.
 '''
 class FormatState:
 	def __init__(self):
 		self.isEscaped = False
 		self.isInString = False
+		self.isEscapeEnd = False
 
 
 '''
-The result of updating the format state.
+The result of updating the format state. This is transient, we hand out one result per update and it is not long-lived.
 '''
 class UpdateFormatStateResult:
 	def __init__(self):
 		self.isStringStart = False
 		self.isStringEnd = False
+		self.isEscapeStart = False
+		self.isEscapeEnd = False
 
 
 '''
@@ -68,20 +71,34 @@ def getLinkMacroURL(token):
 
 
 '''
-Updates the format state given the next character.
+Updates the format state given the next character. Invoked BEFORE formatting the character. Used to inform how to format it.
 '''
-def updateFormatState(state, character):
+def updateFormatStateBefore(state, character):
 	updateResult = UpdateFormatStateResult()
 	escape = False
 	if not state.isEscaped:
 		if character == '\\':
 			escape = True
+			updateResult.isEscapeStart = True
 		elif character == '"':
 			state.isInString = (not state.isInString)
 			updateResult.isStringStart = state.isInString
 			updateResult.isStringEnd = not state.isInString
+	updateResult.isEscapeEnd = state.isEscapeEnd
 	state.isEscaped = escape
 	return updateResult
+
+
+'''
+Updates the format state given the next character. Invoked AFTER formatting the character. Used to inform how to format remaining characters.
+'''
+def updateFormatStateAfter(state, beforeUpdateResult, character):
+	if state.isEscapeEnd:
+		# We just processed the escape end, so the escape sequence is over now.
+		state.isEscapeEnd = False
+	if beforeUpdateResult.isEscapeStart:
+		# We just processed the escape start. An escape sequence is 2 characters, so we are now at the escape end next.
+		state.isEscapeEnd = True
 
 
 '''
@@ -90,13 +107,18 @@ Returns the same token of native code except with HTML+CSS formatting so that it
 def formatNativeCodeToken(state, token):
 	formattedToken = ""
 	for character in token:
-		result = updateFormatState(state, character)
+		result = updateFormatStateBefore(state, character)
 		if result.isStringStart:
 			formattedToken += '<span class="c-string">{}'.format(character)
 		elif result.isStringEnd:
 			formattedToken += '{}</span>'.format(character)
+		elif result.isEscapeStart:
+			formattedToken += '<span class="escape-sequence">{}'.format(character)
+		elif result.isEscapeEnd:
+			formattedToken += '{}</span>'.format(character)
 		else:
 			formattedToken += character
+		updateFormatStateAfter(state, result, character)
 	return formattedToken
 
 

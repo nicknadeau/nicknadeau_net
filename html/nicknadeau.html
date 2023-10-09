@@ -26,18 +26,18 @@
 		<br><span class="cutive-mono-16" style="margin-left: 0px"></span>
 		<br><span class="cutive-mono-16" style="margin-left: 0px"><span class="c-keyword">static</span> <span class="c-keyword">void</span> printInstructions() {</span>
 		<br><span class="cutive-mono-16" style="margin-left: 25px">printf(</span>
-		<br><span class="cutive-mono-16" style="margin-left: 50px"><span class="c-string">"To display a specific page, write the name of the page and then hit ENTER.\n"</span></span>
-		<br><span class="cutive-mono-16" style="margin-left: 50px"><span class="c-string">"To list the pages, write 'list' and then hit ENTER.\n"</span></span>
-		<br><span class="cutive-mono-16" style="margin-left: 50px"><span class="c-string">"To stop running, write 'exit' and then hit ENTER. Or, you know, the good ole CTRL+C.\n"</span></span>
+		<br><span class="cutive-mono-16" style="margin-left: 50px"><span class="c-string">"To display a specific page, write the name of the page and then hit ENTER.<span class="escape-sequence">\n</span>"</span></span>
+		<br><span class="cutive-mono-16" style="margin-left: 50px"><span class="c-string">"To list the pages, write 'list' and then hit ENTER.<span class="escape-sequence">\n</span>"</span></span>
+		<br><span class="cutive-mono-16" style="margin-left: 50px"><span class="c-string">"To stop running, write 'exit' and then hit ENTER. Or, you know, the good ole CTRL+C.<span class="escape-sequence">\n</span>"</span></span>
 		<br><span class="cutive-mono-16" style="margin-left: 25px">);</span>
 		<br><span class="cutive-mono-16" style="margin-left: 0px">}</span>
 		<br><span class="cutive-mono-16" style="margin-left: 0px"></span>
 		<br><span class="cutive-mono-16" style="margin-left: 0px"><span class="c-keyword">static</span> <span class="c-keyword">void</span> list() {</span>
 		<br><span class="cutive-mono-16" style="margin-left: 25px">printf(</span>
-		<br><span class="cutive-mono-16" style="margin-left: 50px"><span class="c-string">"\nPages: 'about', 'native', 'github', 'blog [post id]'"</span></span>
-		<br><span class="cutive-mono-16" style="margin-left: 50px"><span class="c-string">"\n\nNote: the 'post id' of a blog post is the number in square brackets listed on the blog page."</span></span>
-		<br><span class="cutive-mono-16" style="margin-left: 50px"><span class="c-string">"\nTo view the blog page itself and not a specific post, omit the post id."</span></span>
-		<br><span class="cutive-mono-16" style="margin-left: 50px"><span class="c-string">"\n"</span></span>
+		<br><span class="cutive-mono-16" style="margin-left: 50px"><span class="c-string">"<span class="escape-sequence">\n</span>Pages: 'about', 'native', 'github', 'blog [post id]'"</span></span>
+		<br><span class="cutive-mono-16" style="margin-left: 50px"><span class="c-string">"<span class="escape-sequence">\n</span><span class="escape-sequence">\n</span>Note: the 'post id' of a blog post is the number in square brackets listed on the blog page."</span></span>
+		<br><span class="cutive-mono-16" style="margin-left: 50px"><span class="c-string">"<span class="escape-sequence">\n</span>To view the blog page itself and not a specific post, omit the post id."</span></span>
+		<br><span class="cutive-mono-16" style="margin-left: 50px"><span class="c-string">"<span class="escape-sequence">\n</span>"</span></span>
 		<br><span class="cutive-mono-16" style="margin-left: 25px">);</span>
 		<br><span class="cutive-mono-16" style="margin-left: 0px">}</span>
 		<br><span class="cutive-mono-16" style="margin-left: 0px"></span>
@@ -69,25 +69,25 @@
 		<br><span class="cutive-mono-16" style="margin-left: 0px">}</span>
 		<br><span class="cutive-mono-16" style="margin-left: 0px"></span>
 		<br><span class="cutive-mono-16" style="margin-left: 0px"><span class="c-keyword">static</span> <span class="c-keyword">void</span> displayBlogPost(uint32_t postId) {</span>
-		<br><span class="cutive-mono-16" style="margin-left: 25px">printf(<span class="c-string">"Displaying post %u\n"</span>, postId);</span>
+		<br><span class="cutive-mono-16" style="margin-left: 25px">printf(<span class="c-string">"Displaying post %u<span class="escape-sequence">\n</span>"</span>, postId);</span>
 		<br><span class="cutive-mono-16" style="margin-left: 25px">//TODO implement <span class="c-keyword">for</span> real.</span>
 		<br><span class="cutive-mono-16" style="margin-left: 0px">}</span>
 		<br><span class="cutive-mono-16" style="margin-left: 0px"></span>
 		<br><span class="cutive-mono-16" style="margin-left: 0px"><span class="c-keyword">static</span> <span class="c-keyword">void</span> printPagePreamble(const <span class="c-keyword">char</span> *pageName, <span class="c-keyword">uint32_t</span> nameLength) {</span>
-		<br><span class="cutive-mono-16" style="margin-left: 25px">printf(<span class="c-string">"\n===> Page: %.*s\n\n"</span>, nameLength, pageName);</span>
+		<br><span class="cutive-mono-16" style="margin-left: 25px">printf(<span class="c-string">"<span class="escape-sequence">\n</span>===> Page: %.*s<span class="escape-sequence">\n</span><span class="escape-sequence">\n</span>"</span>, nameLength, pageName);</span>
 		<br><span class="cutive-mono-16" style="margin-left: 0px">}</span>
 		<br><span class="cutive-mono-16" style="margin-left: 0px"></span>
 		<br><span class="cutive-mono-16" style="margin-left: 0px"><span class="c-keyword">int</span> main(int argc, <span class="c-keyword">const</span> <span class="c-keyword">char</span> **argv)</span>
 		<br><span class="cutive-mono-16" style="margin-left: 0px">{</span>
 		<br><span class="cutive-mono-16" style="margin-left: 25px"><span class="c-keyword">char</span> buffer[BUFSIZ];</span>
 		<br><span class="cutive-mono-16" style="margin-left: 25px">printInstructions();</span>
-		<br><span class="cutive-mono-16" style="margin-left: 25px">printf(<span class="c-string">"\n# "</span>);</span>
+		<br><span class="cutive-mono-16" style="margin-left: 25px">printf(<span class="c-string">"<span class="escape-sequence">\n</span># "</span>);</span>
 		<br><span class="cutive-mono-16" style="margin-left: 25px">fflush(stdout);</span>
 		<br><span class="cutive-mono-16" style="margin-left: 25px"><span class="c-keyword">int</span> bytesRead = read(STDIN_FILENO, buffer, BUFSIZ);</span>
 		<br><span class="cutive-mono-16" style="margin-left: 25px"><span class="c-keyword">while</span> (bytesRead > 0) {</span>
 		<br><span class="cutive-mono-16" style="margin-left: 50px"><span class="c-keyword">uint32_t</span> bufferSize = bytesRead - 1;</span>
 		<br><span class="cutive-mono-16" style="margin-left: 50px"><span class="c-keyword">if</span> (BUFSIZ == bytesRead) {</span>
-		<br><span class="cutive-mono-16" style="margin-left: 75px">fprintf(stderr, <span class="c-string">"...What exactly are you trying to do?\n"</span>);</span>
+		<br><span class="cutive-mono-16" style="margin-left: 75px">fprintf(stderr, <span class="c-string">"...What exactly are you trying to do?<span class="escape-sequence">\n</span>"</span>);</span>
 		<br><span class="cutive-mono-16" style="margin-left: 75px"><span class="c-keyword">return</span> 1;</span>
 		<br><span class="cutive-mono-16" style="margin-left: 50px">} <span class="c-keyword">else</span> <span class="c-keyword">if</span> (stringEquals(<span class="c-string">"exit"</span>, buffer, bufferSize)) {</span>
 		<br><span class="cutive-mono-16" style="margin-left: 75px"><span class="c-keyword">return</span> 0;</span>
@@ -107,7 +107,7 @@
 		<br><span class="cutive-mono-16" style="margin-left: 75px"><span class="c-keyword">bool</span> isInvalidId = false;</span>
 		<br><span class="cutive-mono-16" style="margin-left: 75px"><span class="c-keyword">uint32_t</span> postId = getBlogPostId(buffer, bufferSize, &hasId, &isInvalidId);</span>
 		<br><span class="cutive-mono-16" style="margin-left: 75px"><span class="c-keyword">if</span> (isInvalidId) {</span>
-		<br><span class="cutive-mono-16" style="margin-left: 100px">fprintf(stderr, <span class="c-string">"Invalid 'post id' given. Must be an integer.\n"</span>);</span>
+		<br><span class="cutive-mono-16" style="margin-left: 100px">fprintf(stderr, <span class="c-string">"Invalid 'post id' given. Must be an integer.<span class="escape-sequence">\n</span>"</span>);</span>
 		<br><span class="cutive-mono-16" style="margin-left: 75px">} <span class="c-keyword">else</span> <span class="c-keyword">if</span> (hasId) {</span>
 		<br><span class="cutive-mono-16" style="margin-left: 100px">displayBlogPost(postId);</span>
 		<br><span class="cutive-mono-16" style="margin-left: 75px">} <span class="c-keyword">else</span> {</span>
@@ -117,14 +117,14 @@
 		<br><span class="cutive-mono-16" style="margin-left: 50px">} <span class="c-keyword">else</span> {</span>
 		<br><span class="cutive-mono-16" style="margin-left: 75px">printInstructions();</span>
 		<br><span class="cutive-mono-16" style="margin-left: 50px">}</span>
-		<br><span class="cutive-mono-16" style="margin-left: 50px">printf(<span class="c-string">"\n# "</span>);</span>
+		<br><span class="cutive-mono-16" style="margin-left: 50px">printf(<span class="c-string">"<span class="escape-sequence">\n</span># "</span>);</span>
 		<br><span class="cutive-mono-16" style="margin-left: 50px">fflush(stdout);</span>
 		<br><span class="cutive-mono-16" style="margin-left: 50px">bytesRead = read(STDIN_FILENO, buffer, BUFSIZ);</span>
 		<br><span class="cutive-mono-16" style="margin-left: 25px">}</span>
 		<br><span class="cutive-mono-16" style="margin-left: 25px"><span class="c-keyword">if</span> (0 == bytesRead) {</span>
-		<br><span class="cutive-mono-16" style="margin-left: 50px">fprintf(stderr, <span class="c-string">"**Exiting -> stdin was closed!\n"</span>);</span>
+		<br><span class="cutive-mono-16" style="margin-left: 50px">fprintf(stderr, <span class="c-string">"**Exiting -> stdin was closed!<span class="escape-sequence">\n</span>"</span>);</span>
 		<br><span class="cutive-mono-16" style="margin-left: 25px">} <span class="c-keyword">else</span> {</span>
-		<br><span class="cutive-mono-16" style="margin-left: 50px">fprintf(stderr, <span class="c-string">"**Exiting -> error reading stdin! errno=%d\n"</span>, errno);</span>
+		<br><span class="cutive-mono-16" style="margin-left: 50px">fprintf(stderr, <span class="c-string">"**Exiting -> error reading stdin! errno=%d<span class="escape-sequence">\n</span>"</span>, errno);</span>
 		<br><span class="cutive-mono-16" style="margin-left: 25px">}</span>
 		<br><span class="cutive-mono-16" style="margin-left: 25px"><span class="c-keyword">return</span> 1;</span>
 		<br><span class="cutive-mono-16" style="margin-left: 0px">}</span>
