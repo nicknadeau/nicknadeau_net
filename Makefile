@@ -8,7 +8,6 @@ WEB = html web_root website.tar.gz
 OBJ = \
 	src/native/nicknadeau.o \
 	src/native/about.o \
-	src/native/blog.o \
 	src/native/github.o \
 	src/native/native.o \
 

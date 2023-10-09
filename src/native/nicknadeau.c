@@ -9,7 +9,6 @@
 
 
 LINK(about)
-LINK(blog)
 LINK(github)
 LINK(native)
 
@@ -24,9 +23,7 @@ static void printInstructions() {
 
 static void list() {
 	printf(
-		"\nPages: 'about', 'native', 'github', 'blog [post id]'"
-		"\n\nNote: the 'post id' of a blog post is the number in square brackets listed on the blog page."
-		"\nTo view the blog page itself and not a specific post, omit the post id."
+		"\nPages: 'about', 'native', 'github'"
 		"\n"
 	);
 }
@@ -34,33 +31,6 @@ static void list() {
 static bool stringEquals(const char *expected, const char *buffer, uint32_t bufferSize) {
 	uint32_t expectedSize = strlen(expected);
 	return (expectedSize == bufferSize) && (0 == strncmp(expected, buffer, expectedSize));
-}
-
-static bool stringBeginsWith(const char *prefix, const char *buffer, uint32_t bufferSize) {
-	uint32_t prefixSize = strlen(prefix);
-	return (prefixSize <= bufferSize) && (0 == strncmp(prefix, buffer, prefixSize));
-}
-
-static uint32_t getBlogPostId(const char *buffer, uint32_t bufferSize, bool *out_hasId, bool *out_isInvalidId) {
-	bool hasId = false;
-	uint32_t prefixSize = strlen("blog");
-	uint32_t id;
-	if (prefixSize < bufferSize) {
-		long value = strtol(buffer + prefixSize, NULL, 10);
-		if ((LONG_MIN == value) || (LONG_MAX == value)) {
-			*out_isInvalidId = true;
-			return 0;
-		}
-		id = (uint32_t) value;
-		hasId = true;
-	}
-	*out_hasId = hasId;
-	return id;
-}
-
-static void displayBlogPost(uint32_t postId) {
-	printf("Displaying post %u\n", postId);
-	//TODO implement for real.
 }
 
 static void printPagePreamble(const char *pageName, uint32_t nameLength) {
@@ -92,18 +62,6 @@ int main(int argc, const char **argv)
 		} else if (stringEquals("github", buffer, bufferSize)) {
 			printPagePreamble(buffer, bufferSize);
 			github();
-		} else if (stringBeginsWith("blog", buffer, bufferSize)) {
-			bool hasId = false;
-			bool isInvalidId = false;
-			uint32_t postId = getBlogPostId(buffer, bufferSize, &hasId, &isInvalidId);
-			if (isInvalidId) {
-				fprintf(stderr, "Invalid 'post id' given. Must be an integer.\n");
-			} else if (hasId) {
-				displayBlogPost(postId);
-			} else {
-				printPagePreamble(buffer, bufferSize);
-				blog();
-			}
 		} else {
 			printInstructions();
 		}

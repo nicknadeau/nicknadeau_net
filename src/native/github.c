@@ -2,7 +2,6 @@
 
 
 LINK(about)
-LINK(blog)
 LINK(github)
 LINK(native)
 

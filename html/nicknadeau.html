@@ -19,7 +19,6 @@
 		<br><span class="cutive-mono-16" style="margin-left: 0px"></span>
 		<br><span class="cutive-mono-16" style="margin-left: 0px"></span>
 		<br><span class="cutive-mono-16" style="margin-left: 0px"><a href="/about.html">LINK(about)</a></span>
-		<br><span class="cutive-mono-16" style="margin-left: 0px"><a href="/blog.html">LINK(blog)</a></span>
 		<br><span class="cutive-mono-16" style="margin-left: 0px"><a href="/github.html">LINK(github)</a></span>
 		<br><span class="cutive-mono-16" style="margin-left: 0px"><a href="/native.html">LINK(native)</a></span>
 		<br><span class="cutive-mono-16" style="margin-left: 0px"></span>
@@ -34,9 +33,7 @@
 		<br><span class="cutive-mono-16" style="margin-left: 0px"></span>
 		<br><span class="cutive-mono-16" style="margin-left: 0px"><span class="c-keyword">static</span> <span class="c-keyword">void</span> list() {</span>
 		<br><span class="cutive-mono-16" style="margin-left: 25px">printf(</span>
-		<br><span class="cutive-mono-16" style="margin-left: 50px"><span class="c-string">"<span class="escape-sequence">\n</span>Pages: 'about', 'native', 'github', 'blog [post id]'"</span></span>
-		<br><span class="cutive-mono-16" style="margin-left: 50px"><span class="c-string">"<span class="escape-sequence">\n</span><span class="escape-sequence">\n</span>Note: the 'post id' of a blog post is the number in square brackets listed on the blog page."</span></span>
-		<br><span class="cutive-mono-16" style="margin-left: 50px"><span class="c-string">"<span class="escape-sequence">\n</span>To view the blog page itself and not a specific post, omit the post id."</span></span>
+		<br><span class="cutive-mono-16" style="margin-left: 50px"><span class="c-string">"<span class="escape-sequence">\n</span>Pages: 'about', 'native', 'github'"</span></span>
 		<br><span class="cutive-mono-16" style="margin-left: 50px"><span class="c-string">"<span class="escape-sequence">\n</span>"</span></span>
 		<br><span class="cutive-mono-16" style="margin-left: 25px">);</span>
 		<br><span class="cutive-mono-16" style="margin-left: 0px">}</span>
@@ -44,33 +41,6 @@
 		<br><span class="cutive-mono-16" style="margin-left: 0px"><span class="c-keyword">static</span> <span class="c-keyword">bool</span> stringEquals(const <span class="c-keyword">char</span> *expected, <span class="c-keyword">const</span> <span class="c-keyword">char</span> *buffer, <span class="c-keyword">uint32_t</span> bufferSize) {</span>
 		<br><span class="cutive-mono-16" style="margin-left: 25px"><span class="c-keyword">uint32_t</span> expectedSize = strlen(expected);</span>
 		<br><span class="cutive-mono-16" style="margin-left: 25px"><span class="c-keyword">return</span> (expectedSize == bufferSize) && (0 == strncmp(expected, buffer, expectedSize));</span>
-		<br><span class="cutive-mono-16" style="margin-left: 0px">}</span>
-		<br><span class="cutive-mono-16" style="margin-left: 0px"></span>
-		<br><span class="cutive-mono-16" style="margin-left: 0px"><span class="c-keyword">static</span> <span class="c-keyword">bool</span> stringBeginsWith(const <span class="c-keyword">char</span> *prefix, <span class="c-keyword">const</span> <span class="c-keyword">char</span> *buffer, <span class="c-keyword">uint32_t</span> bufferSize) {</span>
-		<br><span class="cutive-mono-16" style="margin-left: 25px"><span class="c-keyword">uint32_t</span> prefixSize = strlen(prefix);</span>
-		<br><span class="cutive-mono-16" style="margin-left: 25px"><span class="c-keyword">return</span> (prefixSize <= bufferSize) && (0 == strncmp(prefix, buffer, prefixSize));</span>
-		<br><span class="cutive-mono-16" style="margin-left: 0px">}</span>
-		<br><span class="cutive-mono-16" style="margin-left: 0px"></span>
-		<br><span class="cutive-mono-16" style="margin-left: 0px"><span class="c-keyword">static</span> <span class="c-keyword">uint32_t</span> getBlogPostId(const <span class="c-keyword">char</span> *buffer, <span class="c-keyword">uint32_t</span> bufferSize, <span class="c-keyword">bool</span> *out_hasId, <span class="c-keyword">bool</span> *out_isInvalidId) {</span>
-		<br><span class="cutive-mono-16" style="margin-left: 25px"><span class="c-keyword">bool</span> hasId = false;</span>
-		<br><span class="cutive-mono-16" style="margin-left: 25px"><span class="c-keyword">uint32_t</span> prefixSize = strlen(<span class="c-string">"blog"</span>);</span>
-		<br><span class="cutive-mono-16" style="margin-left: 25px"><span class="c-keyword">uint32_t</span> id;</span>
-		<br><span class="cutive-mono-16" style="margin-left: 25px"><span class="c-keyword">if</span> (prefixSize < bufferSize) {</span>
-		<br><span class="cutive-mono-16" style="margin-left: 50px"><span class="c-keyword">long</span> value = strtol(buffer + prefixSize, NULL, 10);</span>
-		<br><span class="cutive-mono-16" style="margin-left: 50px"><span class="c-keyword">if</span> ((LONG_MIN == value) || (LONG_MAX == value)) {</span>
-		<br><span class="cutive-mono-16" style="margin-left: 75px">*out_isInvalidId = true;</span>
-		<br><span class="cutive-mono-16" style="margin-left: 75px"><span class="c-keyword">return</span> 0;</span>
-		<br><span class="cutive-mono-16" style="margin-left: 50px">}</span>
-		<br><span class="cutive-mono-16" style="margin-left: 50px">id = (uint32_t) value;</span>
-		<br><span class="cutive-mono-16" style="margin-left: 50px">hasId = true;</span>
-		<br><span class="cutive-mono-16" style="margin-left: 25px">}</span>
-		<br><span class="cutive-mono-16" style="margin-left: 25px">*out_hasId = hasId;</span>
-		<br><span class="cutive-mono-16" style="margin-left: 25px"><span class="c-keyword">return</span> id;</span>
-		<br><span class="cutive-mono-16" style="margin-left: 0px">}</span>
-		<br><span class="cutive-mono-16" style="margin-left: 0px"></span>
-		<br><span class="cutive-mono-16" style="margin-left: 0px"><span class="c-keyword">static</span> <span class="c-keyword">void</span> displayBlogPost(uint32_t postId) {</span>
-		<br><span class="cutive-mono-16" style="margin-left: 25px">printf(<span class="c-string">"Displaying post %u<span class="escape-sequence">\n</span>"</span>, postId);</span>
-		<br><span class="cutive-mono-16" style="margin-left: 25px">//TODO implement <span class="c-keyword">for</span> real.</span>
 		<br><span class="cutive-mono-16" style="margin-left: 0px">}</span>
 		<br><span class="cutive-mono-16" style="margin-left: 0px"></span>
 		<br><span class="cutive-mono-16" style="margin-left: 0px"><span class="c-keyword">static</span> <span class="c-keyword">void</span> printPagePreamble(const <span class="c-keyword">char</span> *pageName, <span class="c-keyword">uint32_t</span> nameLength) {</span>
@@ -102,18 +72,6 @@
 		<br><span class="cutive-mono-16" style="margin-left: 50px">} <span class="c-keyword">else</span> <span class="c-keyword">if</span> (stringEquals(<span class="c-string">"github"</span>, buffer, bufferSize)) {</span>
 		<br><span class="cutive-mono-16" style="margin-left: 75px">printPagePreamble(buffer, bufferSize);</span>
 		<br><span class="cutive-mono-16" style="margin-left: 75px">github();</span>
-		<br><span class="cutive-mono-16" style="margin-left: 50px">} <span class="c-keyword">else</span> <span class="c-keyword">if</span> (stringBeginsWith(<span class="c-string">"blog"</span>, buffer, bufferSize)) {</span>
-		<br><span class="cutive-mono-16" style="margin-left: 75px"><span class="c-keyword">bool</span> hasId = false;</span>
-		<br><span class="cutive-mono-16" style="margin-left: 75px"><span class="c-keyword">bool</span> isInvalidId = false;</span>
-		<br><span class="cutive-mono-16" style="margin-left: 75px"><span class="c-keyword">uint32_t</span> postId = getBlogPostId(buffer, bufferSize, &hasId, &isInvalidId);</span>
-		<br><span class="cutive-mono-16" style="margin-left: 75px"><span class="c-keyword">if</span> (isInvalidId) {</span>
-		<br><span class="cutive-mono-16" style="margin-left: 100px">fprintf(stderr, <span class="c-string">"Invalid 'post id' given. Must be an integer.<span class="escape-sequence">\n</span>"</span>);</span>
-		<br><span class="cutive-mono-16" style="margin-left: 75px">} <span class="c-keyword">else</span> <span class="c-keyword">if</span> (hasId) {</span>
-		<br><span class="cutive-mono-16" style="margin-left: 100px">displayBlogPost(postId);</span>
-		<br><span class="cutive-mono-16" style="margin-left: 75px">} <span class="c-keyword">else</span> {</span>
-		<br><span class="cutive-mono-16" style="margin-left: 100px">printPagePreamble(buffer, bufferSize);</span>
-		<br><span class="cutive-mono-16" style="margin-left: 100px">blog();</span>
-		<br><span class="cutive-mono-16" style="margin-left: 75px">}</span>
 		<br><span class="cutive-mono-16" style="margin-left: 50px">} <span class="c-keyword">else</span> {</span>
 		<br><span class="cutive-mono-16" style="margin-left: 75px">printInstructions();</span>
 		<br><span class="cutive-mono-16" style="margin-left: 50px">}</span>
