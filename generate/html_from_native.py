@@ -246,8 +246,18 @@ def generateHtmlFromNativeSource(nativeSourceFile, outDir):
 
 	# Create the html file using the same name as the source file but with the .html extension instead. Then generate the html.
 	outFile = os.path.join(outDir, "{}.html".format(sourceName))
-	print("Generating {} from native source file {}".format(outFile, absSourcePath))
-	return generateHtml(absSourcePath, sourceName, outFile)
+	
+	alreadyUpToDate = False
+	if (os.path.exists(outFile)):
+		sourceModificationTime = os.path.getmtime(absSourcePath)
+		outModificationTime = os.path.getmtime(outFile)
+		alreadyUpToDate = sourceModificationTime < outModificationTime
+	if alreadyUpToDate:
+		print("Skipping generation - output already up-to-date for native source file {}".format(absSourcePath))
+		return 0
+	else:
+		print("Generating {} from native source file {}".format(outFile, absSourcePath))
+		return generateHtml(absSourcePath, sourceName, outFile)
 
 
 if __name__ == '__main__':

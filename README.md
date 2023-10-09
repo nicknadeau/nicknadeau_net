@@ -24,6 +24,11 @@ The site is defined as a collection of compilable C source files that can be run
 
 To generate all our HTML files from all our C files simply run:
 ```shell
+make generate-html
+```
+
+Note that this command is additive-only. That is, it will update existing files or new files but if a native source file is being deleted it will not delete its generated file. If additive and deletive operations are desired it is best to clean out the generated files entirely first and trigger a mass re-generation (there are only a few source files so this doesn't take long):
+```
 make clean generate-html
 ```
 
@@ -36,6 +41,11 @@ make clean pack
 
 ## Putting It All Together
 We can compile our C source, generate all of the corresponding HTML files from it, and then pack up our web contents by simply running:
+```shell
+make
+```
+
+Note that this command is additive-only (see the above section on auto-generating from native source) and if deletive operations are desired as well then use:
 ```shell
 make clean all
 ```
