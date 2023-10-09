@@ -1,11 +1,11 @@
 a {
-	text-decoration: none;
+	text-decoration: underline;
 	font-weight: bold;
-	color: #AD1010;
+	color: inherit;
 }
 
 a:hover {
-	color: #000000;
+	font-size: 18px;
 }
 
 .cutive-mono-18 {

@@ -64,10 +64,29 @@ def isLinkMacro(state, token):
 
 
 '''
+Returns true if the given token is an explicit URL.
+'''
+def isUrl(state, token):
+	return "https://" in token
+
+
+'''
 Returns the URL that the link macro should open when clicked.
 '''
 def getLinkMacroURL(token):
 	return "/" + token[5:-1] + ".html"
+
+
+'''
+Returns the explicit URL embedded in the given token.
+'''
+def getUrl(token):
+	startIndex = token.find("https://")
+	url = token[startIndex:]
+	if url.endswith('"'):
+		return url[:-1]
+	else:
+		return url
 
 
 '''
@@ -123,6 +142,18 @@ def formatNativeCodeToken(state, token):
 
 
 '''
+Injects a hyperlink into the given token. The hyperlink is to the given url and the token is such that it contains this url directly inside it.
+Essentially, we want to find the url substring inside token and wrap it inside an 'a href' HTML tag and point it at that url.
+'''
+def injectHyperlinkInToken(token, url, endWithWhitespace):
+	startIndex = token.find(url)
+	endIndex = startIndex + len(url)
+	front = token[:startIndex]
+	back = token[endIndex:]
+	return '{}<a href="{}">{}</a>{}{}'.format(front, url, url, back, ' ' if endWithWhitespace else '')
+
+
+'''
 Returns the same line of native code except with HTML+CSS formatting so that it renders correctly on the web.
 Note: this will not provide a font style and it will not add any left margins for tabs. This only focuses on displaying the line contents
 in this isolated context correctly.
@@ -140,6 +171,9 @@ def formatNativeCodeLine(state, line):
 		elif (isLinkMacro(state, token)):
 			url = getLinkMacroURL(token)
 			formattedLine += '<a href="{}">{}</a>{}'.format(url, formattedToken, ' ' if (i < len(tokens) - 1) else '')
+		elif (isUrl(state, token)):
+			url = getUrl(token)
+			formattedLine += injectHyperlinkInToken(formattedToken, url, i < len(tokens) - 1)
 		else:
 			formattedLine += '{}{}'.format(formattedToken, ' ' if (i < len(tokens) - 1) else '')
 	return formattedLine
