@@ -36,7 +36,7 @@ make clean generate-html
 To package the web frontend code up into a directory to be hosted out of, as well as a tarball, run:
 
 ```shell
-make clean pack
+make pack
 ```
 
 ## Putting It All Together
