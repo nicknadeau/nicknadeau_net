@@ -6,7 +6,13 @@ The pages of my website display my page content structured inside C code syntax.
 
 The "native" portion of the site refers to all of the C source code, from which the real web frontend is auto-generated.
 
-## Building And Running Natively
+## Contents
+* [Building And Running Natively](#build-and-run)
+* [Auto-generating HTML From Native Source](#gen-native)
+* [Packaging Website](#pack)
+* [Putting It All Together](#all)
+
+### <a name="build-and-run">Building And Running Natively</a>
 To build the site-as-commandline binary:
 
 ```shell
@@ -19,7 +25,7 @@ To run the site-as-commandline binary, either execute the binary directly or:
 make run
 ```
 
-## Auto-generating HTML From Native Source
+### <a name="gen-native">Auto-generating HTML From Native Source</a>
 The site is defined as a collection of compilable C source files that can be run on the commandline. It would just be wasteful and error-prone to rewrite them as HTML for the web too. Instead, we just auto-generate the HTML from the C files.
 
 To generate all our HTML files from all our C files simply run:
@@ -32,14 +38,14 @@ Note that this command is additive-only. That is, it will update existing files 
 make clean generate-html
 ```
 
-## Packaging Website
+### <a name="pack">Packaging Website</a>
 To package the web frontend code up into a directory to be hosted out of, as well as a tarball, run:
 
 ```shell
 make pack
 ```
 
-## Putting It All Together
+### <a name="all">Putting It All Together</a>
 We can compile our C source, generate all of the corresponding HTML files from it, and then pack up our web contents by simply running:
 ```shell
 make
