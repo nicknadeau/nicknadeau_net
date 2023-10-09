@@ -10,13 +10,13 @@ The "native" portion of the site refers to all of the C source code, from which 
 To build the site-as-commandline binary:
 
 ```shell
-make clean src/native/nicknadeau
+make src/native/nicknadeau
 ```
 
 To run the site-as-commandline binary, either execute the binary directly or:
 
 ```shell
-make clean run
+make run
 ```
 
 ## Auto-generating HTML From Native Source
