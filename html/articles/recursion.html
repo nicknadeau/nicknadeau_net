@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>A Better Way To Think Of Recursion</title>
+		<meta name="description" content="Nick Nadeau's article: A Better Way To Think Of Recursion">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<link href="https://fonts.googleapis.com/css?family=Montserrat:100" rel="stylesheet">
+		<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css", rel="stylesheet">
+		<link href="../styles/style.css" rel="stylesheet">
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+		<script src="//cdnjs.cloudflare.com/ajax/libs/highlightjs-line-numbers.js/2.8.0/highlightjs-line-numbers.min.js"></script>
+		<script>hljs.highlightAll(); hljs.initLineNumbersOnLoad();</script>
+	</head>
+	<body>
+		<div id="name" class="title">Nick Nadeau</div>
+		<div id="links" class="links">
+			<span id="about-link" class="link"><a href="../index.html">About</a></span>
+			|
+			<span id="github-link" class="link"><a href="https://github.com/nicknadeau">Github</a></span>
+			|
+			<span id="articles-link" class="link"><a href="../articles.html">Articles</a></span>
+		</div>
+		<div id="article-title" class="article_title">A Better Way To Think Of Recursion</div>
+		<div id="body" class="article_body">
+			Recursion is often the first topic in Computer Science that gives people trouble. But one of the biggest challenges in writing a recursive algorithm is dispelling the false belief that the situation is more difficult than it is. Thankfully, a simple good coding practice can resolve this for us.
+			<p>
+			The false belief is that recursion feels like a chicken-and-egg dilemma. Things feel undefined. How are you supposed to write a function that invokes itself when you are still in the middle of writing that function? It feels incomplete. As if you've been given a black box, not told how it works, but tasked with making use of it.
+			<p>
+			But the situation is not so dire. It may feel like the function is hazy or undefined because you are still writing it, but that's a result of confusing functionality with implementation. We use library functions every day that someone else wrote. We don't know how they are implemented, yet we can use them because someone wrote documentation for us.
+			<p>
+			It's no different here. Before you begin writing a recursive function, stop and finish its documentation first. In full. Describe what it does, precisely. Your goal will be to write code that ensures this promise is kept. But now when it comes time to invoke the function recursively, there's no uncertainty - you know what it does and how to use it. The function doesn't know it was invoked by itself. It won't behave differently. It acts the same way no matter who or where it is called from. Remember that.
+			<p>
+			The most challenging part of recursion is this confusion. Once you realize things are simpler than they appear, it's not so bad.
+			<p>
+			Let's solidify things with an example.
+			<p>
+			Suppose we are asked to write an algorithm that takes a string as input and must output that same string, but with all adjacent duplicate characters removed from it, so that the final string has no adjacent duplicates. For example, <code>abbc</code> would become <code>ac</code>. But <code>abbac</code> would become <code>c</code> because, after we drop the adjacent b's we are left with <code>aac</code> and we must then drop the a's.
+			<p>
+			At a high level, we can envision a solution where we strip adjacent characters from a string to form a new string, and then repeat the same procedure on the new string until there are no more adjacent duplicates. Whenever a solution involves performing an action on an input to produce an output, and then re-performing the action but using the output as the new input, recursion can be used. The reason the recursive function calls into itself is to re-perform the action after all.
+			<p>
+			First thing's first. We need to document our function so we understand what it does. We will call our function <code>remove_adjacent_dups</code>. The documentation is simple. It is derived from the problem statement, since the whole point is it solves that problem:
+			<pre><code class="language-python">"""
+Removes all sequences of characters from string that contain the same
+character repeated. This action is performed repeatedly, stripping out
+such sequences, until there are no two adjacent characters in the
+final string which are the same.
+
+Returns that resulting string.
+"""
+def remove_adjacent_dups(string):
+    pass
+</code></pre>
+			<p>
+			Now, if we had such a function available to us, as an <i>external</i> function, how can we solve our problem? Easy. It does everything we need. Just call it!
+			<p>
+			<pre><code class="language-python">import sys
+
+
+"""
+Removes all sequences of characters from string that contain the same
+character repeated. This action is performed repeatedly, stripping out
+such sequences, until there are no two adjacent characters in the
+final string which are the same.
+
+Returns that resulting string.
+"""
+def remove_adjacent_dups(string):
+    pass
+
+
+if __name__ == '__main__':
+    if len(sys.argv) != 2:
+        print(f"USAGE: {sys.argv[0]} <string>", file=sys.stderr)
+        sys.exit(1)
+    remove_adjacent_dups(sys.argv[1])
+</code></pre>
+			<p>
+			Let's put a recursive spin on the above question. If we had to implement this function <i>but we also had access to it</i>, how could it make use of itself to achieve its goal? Obviously it can't just invoke itself and return the result:
+			<p>
+			<pre><code class="language-python">import sys
+
+
+"""
+Removes all sequences of characters from string that contain the same
+character repeated. This action is performed repeatedly, stripping out
+such sequences, until there are no two adjacent characters in the
+final string which are the same.
+
+Returns that resulting string.
+"""
+def remove_adjacent_dups(string):
+    return remove_adjacent_dups(string)
+
+
+if __name__ == '__main__':
+    if len(sys.argv) != 2:
+        print(f"USAGE: {sys.argv[0]} <string>", file=sys.stderr)
+        sys.exit(1)
+    result = remove_adjacent_dups(sys.argv[1])
+    print(f"Stripped '{sys.argv[1]}' down to: '{result}'")
+</code></pre>
+			<p>
+			Line 13 jumps back to line 12 and that happens over and over until we finally run out of memory and get a stack overflow error:
+			<p>
+			<code class="terminal">$ python3 dups.py 'abba'
+Traceback (most recent call last):
+  File "dups.py", line 12, in <module>
+    result = remove_adjacent_dups(sys.argv[1])
+  File "dups.py", line 5, in remove_adjacent_dups
+    return remove_adjacent_dups(string)
+  File "dups.py", line 5, in remove_adjacent_dups
+    return remove_adjacent_dups(string)
+  File "dups.py", line 5, in remove_adjacent_dups
+    return remove_adjacent_dups(string)
+  [Previous line repeated 996 more times]
+RecursionError: maximum recursion depth exceeded
+			</code>
+			<p>
+			To prevent an infinite loop like this, a recursive function needs a <i>stopping condition</i> and a <i>shrinking operation</i>.
+			<p>
+			A stopping condition is just some case where, instead of making a recursive call, we return back immediately. This puts an end to the recursion, which is what we need to prevent an infinite loop.
+			<p>
+			Our stopping condition should be triggered when the input string is so trivial to handle that we don't need any help, we can return the correct answer right away. Functions may have multiple stopping conditions, but a single stop point is also common.
+			<p>
+			For our algorithm, the empty string is an obvious choice. Such a string contains no duplicates so we can return the empty string back. The other obvious choice is when a non-empty string contains no adjacent characters at all. We can return that same string back as our answer. Notice that the empty string is just a special case of this second condition, which is more broad. In other words, our stopping condition is simply: the input string contains no adjacent duplicate characters:
+			<p>
+			<pre><code class="language-python">import sys
+
+
+"""
+Removes all sequences of characters from string that contain the same
+character repeated. This action is performed repeatedly, stripping out
+such sequences, until there are no two adjacent characters in the
+final string which are the same.
+
+Returns that resulting string.
+"""
+def remove_adjacent_dups(string):
+    foundDup = False
+    for i in range(0, len(string) - 1):
+        if string[i] == string[i + 1]:
+            foundDup = True
+	    break
+
+    if not foundDup:
+        return string
+
+    return remove_adjacent_dups(string)
+
+
+if __name__ == '__main__':
+    if len(sys.argv) != 2:
+        print(f"USAGE: {sys.argv[0]} <string>", file=sys.stderr)
+        sys.exit(1)
+    result = remove_adjacent_dups(sys.argv[1])
+    print(f"Stripped '{sys.argv[1]}' down to: '{result}'")
+</code></pre>
+			<p>
+			When our input is duplicate-free, there is no infinite loop and our algorithm is correct. However, when we supply a string with duplicates, line 22 jumps to line 12 and this repeats indefinitely:
+			<code class="terminal">$ python3 dups.py ''
+Stripped '' down to: ''
+
+$ python3 dups.py 'abcd'
+Stripped 'abcd' down to: 'abcd'
+
+$ python3 dups.py 'abba'
+Traceback (most recent call last):
+  File "dups.py", line 15, in <module>
+    result = remove_adjacent_dups(sys.argv[1])
+  File "dups.py", line 8, in remove_adjacent_dups
+    return remove_adjacent_dups(string)
+  File "dups.py", line 8, in remove_adjacent_dups
+    return remove_adjacent_dups(string)
+  File "dups.py", line 8, in remove_adjacent_dups
+    return remove_adjacent_dups(string)
+  [Previous line repeated 995 more times]
+  File "dups.py", line 5, in remove_adjacent_dups
+    if len(string) == 0:
+RecursionError: maximum recursion depth exceeded while calling a Python object
+			</code>
+			<p>
+			The stopping condition is insufficient on its own. We need some way of making the recursive call so that, each time we do, we get closer and closer to the stopping condition. This is what the <i>shrinking operation</i> does. You can think of it as the input gets smaller and smaller every time until we finally hit the stopping condition. For a lot of algorithms that's true, but not all. The thing we are shrinking is not the input size, but the amount of work needed to be performed on the input is what's shrinking. Eventually, we shrink down to a point where no work is needed at all - and that's what the stopping condition is.
+			<p>
+			In other words, we need to replace line 22 with some logic that performs the base unit of work we need done, transforming the input string into a new string. And we then invoke ourselves recursively using the new string, which by definition now requires less work since we just performed some work on it.
+			<p>
+			The "base unit of work" is the act of removing adjacent duplicate characters from the string to create a new one. The new string may now have new adjacent duplicates, that's fine, we will call ourselves to handle the new string. But we've at least stripped down one layer of duplicates from the string:
+			<p>
+			<pre><code class="language-python">import sys
+
+
+"""
+Removes all sequences of characters from string that contain the same
+character repeated. This action is performed repeatedly, stripping out
+such sequences, until there are no two adjacent characters in the
+final string which are the same.
+
+Returns that resulting string.
+"""
+def remove_adjacent_dups(string):
+    foundDup = False
+    for i in range(1, len(string)):
+        if string[i - 1] == string[i]:
+            foundDup = True
+            break
+
+    if not foundDup:
+        return string
+
+    # Build our new string by placing all characters from string into
+    # it unless they are adjacent a duplicate character.
+    shrunkenString = ''
+    prevChar = None
+    for i in range(0, len(string) - 1):
+        if ((prevChar != string[i]) and (string[i] != string[i + 1])):
+            shrunkenString += string[i]
+        prevChar = string[i]
+    # We skip the final character in the loop above.
+    # If it isn't a duplicate, add it to the new string.
+    if prevChar != string[len(string) - 1]:
+        shrunkenString += string[len(string) - 1]
+
+    return remove_adjacent_dups(shrunkenString)
+
+
+if __name__ == '__main__':
+    if len(sys.argv) != 2:
+        print(f"USAGE: {sys.argv[0]} <string>", file=sys.stderr)
+        sys.exit(1)
+    result = remove_adjacent_dups(sys.argv[1])
+    print(f"Stripped '{sys.argv[1]}' down to: '{result}'")
+</pre></code>
+			<p>
+			And voila:
+			<code class="terminal">$ python3 dups.py ''
+Stripped '' down to: ''
+
+$ python3 dups.py 'abcd'
+Stripped 'abcd' down to: 'abcd'
+
+$ python3 dups.py 'abba'
+Stripped 'abba' down to: ''
+
+$ python3 dups.py 'abcdeedcba'
+Stripped 'abcdeedcba' down to: ''
+
+$ python3 dups.py 'aaabccdeffe'
+Stripped 'aaabccdeffe' down to: 'bd'
+			</code>
+			<p>
+			<span class="article_navigation"><a href="top_down_coding.html">&lt Top-Down Coding</a> | <a href="../articles.html">Other Articles &gt</a></span>
+		</div>
+	</body>
+</html>

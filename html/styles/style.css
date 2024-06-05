@@ -1,0 +1,154 @@
+a {
+	text-decoration: underline;
+	font-weight: bold;
+	color: inherit;
+}
+
+a:hover {
+	font-size: 25px;
+	color: #004AAD;
+}
+
+code {
+	font-family:Consolas,Monaco,Lucida Console,Liberation Mono,DejaVu Sans Mono,Bitstream Vera Sans Mono,Courier New;
+	font-size: 16px;
+	font-weight: 400;
+	text-indent: 0px;
+	text-align: left;
+}
+
+.hljs-ln-numbers {
+	border-right: 1px solid #000000;
+}
+
+.title {
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	width: 100%;
+	height: 70px;
+
+	font-family: Montserrat;
+	color: #004AAD;
+	font-size: 32px;
+	font-style: normal;
+	font-weight: 900;
+	line-height: 70px;
+	text-align: center;
+	text-shadow: 1px 0 #004AAD;
+}
+
+.links {
+	position: absolute;
+	top: 70px;
+	left: 0px;
+	width: 100%;
+	height: 40px;
+
+	font-family: Montserrat;
+	font-size: 20px;
+	font-style: normal;
+	font-weight: 900;
+	line-height: 40px;
+	text-align: center;
+	text-shadow: 1px 0 #000000;
+}
+
+.text_red {
+	color: #AD1F00;
+}
+
+.curr_link {
+	color: #AD1F00;
+	text-shadow: 0px 0 #000000;
+}
+
+.link {
+	text-shadow: 0px 0 #000000;
+}
+
+.about_text {
+	position: absolute;
+	top: 150px;
+	left: 10%;
+	right: 10%;
+	height: 250px;
+
+	font-family: Montserrat;
+	font-size: 20px;
+	font-style: normal;
+	font-weight: 900;
+}
+
+.articles_list {
+	position: absolute;
+	top: 150px;
+	left: 10%;
+	right: 0px;
+	height: 250px;
+
+	font-family: Montserrat;
+	font-size: 20px;
+	font-style: normal;
+	font-weight: 900;
+	line-height: 1.5;
+}
+
+.article_title {
+	position: absolute;
+	top: 130px;
+	left: 0px;
+	width: 100%;
+	height: 50px;
+
+	font-family: Montserrat;
+	font-size: 25px;
+	font-style: normal;
+	font-weight: 900;
+	line-height: 50px;
+	text-align: center;
+	color: #AD1F00;
+}
+
+.article_body {
+	position: absolute;
+	top: 220px;
+	left: 10%;
+	right: 10%;
+	height: 250px;
+
+	font-family: Montserrat;
+	font-size: 20px;
+	font-style: normal;
+	font-weight: 900;
+	line-height: 1.3;
+	text-indent: 50px;
+	text-align: justify;
+}
+
+.article_heading {
+	font-size: 22px;
+	text-shadow: 1px 0 #000000;
+}
+
+.article_navigation {
+	display: block;
+	text-indent: 0px;
+	text-align: center;
+}
+
+.code_background {
+	background-color: #F0F0F5;
+}
+
+.terminal {
+	display: block;
+	position: inherit;
+	left: 0px;
+	width: 100%;
+
+	color: #08D612;
+	background-color: #000000;
+	border-radius: 5px;
+	white-space: pre-wrap;
+}

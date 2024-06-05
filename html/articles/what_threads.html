@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>What Are Threads?</title>
+		<meta name="description" content="Nick Nadeau's article: What Are Threads?">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<link href="https://fonts.googleapis.com/css?family=Montserrat:100" rel="stylesheet">
+		<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css", rel="stylesheet">
+		<link href="../styles/style.css" rel="stylesheet">
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+		<script src="//cdnjs.cloudflare.com/ajax/libs/highlightjs-line-numbers.js/2.8.0/highlightjs-line-numbers.min.js"></script>
+		<script>hljs.highlightAll(); hljs.initLineNumbersOnLoad();</script>
+	</head>
+	<body>
+		<div id="name" class="title">Nick Nadeau</div>
+		<div id="links" class="links">
+			<span id="about-link" class="link"><a href="../index.html">About</a></span>
+			|
+			<span id="github-link" class="link"><a href="https://github.com/nicknadeau">Github</a></span>
+			|
+			<span id="articles-link" class="link"><a href="../articles.html">Articles</a></span>
+		</div>
+		<div id="article-title" class="article_title">What Are Threads?</div>
+		<div id="body" class="article_body">
+			A program is a set of instructions executed by the CPU. The CPU executes instructions one by one. A programming language needs to define its starting point (often a function called <code>main</code>), so the first instruction can be found. A program will run indefinitely until an instruction is reached which terminates it, such as an <code>exit</code>.
+			<p>
+			When you run a program, the OS schedules it to be run on a certain CPU. The programmer has no control over which CPU is used. Programs typically have a very short amount of time on a CPU before they are paused. This is how multiple programs can be running at once on a single-CPU machine. Each program runs for a short time slice and yields to another program and then gets rescheduled again later.
+			<p>
+			The OS saves all of the context needed to resume a program from where it left off, such as what instruction is to be executed next, where its memory resides, the values of registers, etc.. Since these time slices are so small, and OS scheduling has come a long way, it gives the illusion that your program is running smoothly and uninterrupted.
+			<p>
+			We can think of the program context as having an execution context - the contextual information associated with instruction execution. This would be things like the next instruction to run and a pointer to the top of the stack. From there, the CPU has the info it needs to continue executing code, and we may think of this contextual information and the sequence of instructions that will be run as a <i>thread of execution</i>. The thread being a string of instructions, with a past present and future.
+			<p>
+			Modern computers often come with more than one CPU (also called a core). This means the OS can schedule one program to run on one CPU and another program to run on a different CPU, and the execution of these programs will legitimately happen at the same time. But frequently it is desirable for a single program itself to want to split its own work up to be run on different cores to take advantage of this parallelism.
+			<p>
+			This is where threads come in. Think of the <i>execution context</i> as holding the information needed to run some code, and the larger <i>program context</i> as encapsulating that execution context along with additional information such as where its heap and global memory resides, etc.. With this model in mind, we can think of the program context as representing the Program and the execution context as representing a Thread within the program.
+			<p>
+			In a normal program, let's say execution begins at the <code>main</code> function, the default "main" thread is the one responsible for executing that function. Execution continues until the thread terminates, at which point the program terminates since its main thread is done.
+			<p>
+			In a multi-threaded program, we can tell the main thread to create other threads. These threads need somewhere to start, so they are typically given a function to begin execution from.
+			<p>
+			The OS is responsible for scheduling program execution, as mentioned above. And program execution is really encapsulated by a thread. This means if your program has two threads and there are two CPUs available, the OS will likely schedule one thread on one core and the other thread on the other. They belong to the same program, but they get to run on two separate CPUs simultaneously.
+			<p>
+			Let's take an example of a single-threaded program that will perform three "jobs". To simulate actual work, we use functions that just sleep for a certain amount of time:
+			<pre><code class="language-c">#include &ltunistd.h&gt
+
+
+static void job1() {
+	sleep(3);
+}
+
+static void job2() {
+	sleep(4);
+}
+
+static void job3() {
+	sleep(5);
+}
+
+int main(int argc, const char **argv) {
+	job1();
+	job2();
+	job3();
+	return 0;
+}</code></pre>
+			<p>
+			Assume the above code is in a file named <code>work.c</code>, then we can compile it with: <code class="code_background">gcc -Wall -o work work.c</code>. If we run it we can see it takes about <code>3+4+5=12</code> seconds:
+			<p>
+			<code class="terminal" style="height: 110px;">$ time ./work
+
+real	0m12.004s
+user	0m0.003s
+sys	0m0.000s</code>
+			<p>
+			Now let's create three threads and assign each thread to one of the three jobs. To do this, we use the <code>pthread_create</code> function in the pthread library to create and start a "p" (POSIX) thread:
+			<pre><code class="language-c">#include &ltunistd.h&gt
+#include &ltpthread.h&gt
+
+
+static void *job1(void *arg) {
+	sleep(3);
+	return NULL;
+}
+
+static void *job2(void *arg) {
+	sleep(4);
+	return NULL;
+}
+
+static void *job3(void *arg) {
+	sleep(5);
+	return NULL;
+}
+
+int main(int argc, const char **argv) {
+	pthread_t thread1, thread2, thread3;
+
+	pthread_create(&thread1, NULL, &job1, NULL);
+	pthread_create(&thread2, NULL, &job2, NULL);
+	pthread_create(&thread3, NULL, &job3, NULL);
+
+	pthread_join(thread1, NULL);
+	pthread_join(thread2, NULL);
+	pthread_join(thread3, NULL);
+
+	return 0;
+}</code></pre>
+			<p>
+			I've skipped error handling so we can focus on the logic. Let's analyze what's going on first before running the program.
+			<p>
+			On lines 23-25 we launch the three threads. The second argument is for specifying advanced attributes for our threads - we pass NULL because we don't care. The third argument is the thread's <i>start function</i>, which is the function where the thread will start its execution. The final argument is a pointer that will be passed into the start function.
+			<p>
+			The start function needs to be tweaked slightly from what we had before. It must return <code>void *</code>, so that a thread can return an arbitrary pointer when it finishes execution. It must also take a single <code>void *</code> argument, which is the pointer passed into the last argument of <code>pthread_create</code>.
+			<p>
+			After line 25 runs, the three threads will begin execution. We need to prevent our main thread from returning, otherwise the program will end as soon as it does. We want to wait for the three threads to finish their jobs before returning. The <code>pthread_join</code> function blocks the main thread until the corresponding thread exits. That's how we accomplish that.
+			<p>
+			Assuming this code is in a file named <code>work.c</code>, we can compile it with: <code class="code_background">gcc -Wall -o work work.c -lpthread</code>. Running it, we see the program now takes about 5 seconds:
+			<p>
+			<code class="terminal" style="height: 110px;">$ time ./work
+
+real	0m5.004s
+user	0m0.000s
+sys	0m0.004s</code>
+			<p>
+			This makes sense. Our three threads are all executing at the same time. The thread running job1 will finish after 3 seconds. The job2 thread after 4, and job3 after 5. This means all the work is done after 5 seconds.
+			<p>
+			<span class="article_navigation"><a href="../articles.html">&lt Other Articles</a> | <a href="what_mutual_exclusion.html">What Is Mutual Exclusion? &gt</a></span>
+		</div>
+	</body>
+</html>

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Atomics: Sequentially Consistent Memory Order</title>
+		<meta name="description" content="Nick Nadeau's article: Atomics: Sequentially Consistent Memory Order">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<link href="https://fonts.googleapis.com/css?family=Montserrat:100" rel="stylesheet">
+		<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css", rel="stylesheet">
+		<link href="../styles/style.css" rel="stylesheet">
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+		<script src="//cdnjs.cloudflare.com/ajax/libs/highlightjs-line-numbers.js/2.8.0/highlightjs-line-numbers.min.js"></script>
+		<script>hljs.highlightAll(); hljs.initLineNumbersOnLoad();</script>
+	</head>
+	<body>
+		<div id="name" class="title">Nick Nadeau</div>
+		<div id="links" class="links">
+			<span id="about-link" class="link"><a href="../index.html">About</a></span>
+			|
+			<span id="github-link" class="link"><a href="https://github.com/nicknadeau">Github</a></span>
+			|
+			<span id="articles-link" class="link"><a href="../articles.html">Articles</a></span>
+		</div>
+		<div id="article-title" class="article_title">Atomics: Sequentially Consistent Memory Order</div>
+		<div id="body" class="article_body">
+			The Sequentially Consistent memory class has one enum: <code>memory_order_seq_cst</code>. This is the default memory order when using a non-explicit atomic function. It is the strongest guarantee and imposes the largest performance penalty. All hardware memory models are weaker than this ordering and therefore special synchronization instructions must be added to achieve it.
+			<p>
+			The Sequentially Consistent memory order establishes Release-Acquire semantics and provides an additional guarantee: that a single total memory order is imposed on all sequentially consistent operations across all threads.
+			<p>
+			Consider a situation where we have two producer and two consumer threads:
+			<pre><code>// Producer 1
+a = 1; // A
+atomic_store_explicit(&b, 0, memory_order_release); // B
+
+// Producer 2
+a = 2; // C
+atomic_store_explicit(&b, 0, memory_order_release); // D
+
+// Consumer 1
+c = atomic_load_explicit(&b, memory_order_acquire); // E
+d = a; //F
+
+// Consumer 2
+c = atomic_load_explicit(&b, memory_order_acquire); // G
+d = a; // H</code></pre>
+			<p>
+			It is possible that Consumer 1 observes <code class="code_background">A->B->C->D</code>, so that <code>a</code> equals 2, and Consumer 2 observes <code class="code_background">C->D->A->B</code>, so <code>a</code> equals 1. According to Release-Acquire semantics, the only guarantees are that A is before B and C before D.
+			<p>
+			If it is important all our consumer threads agree upon the exact same order of events as one another, this clearly won't do. Sequential Consistency fixes this by guaranteeing that A,B,C,D are given a single ordering relative to one another and that this singule order is observed by all threads. This means all of the load and store operations above must be tagged <code>memory_order_seq_cst</code>, because it is only operations tagged as Sequentially Consistent which are given a single total ordering.
+			<p>
+			For example, suppose we have the following:
+			<p>
+			<pre><code>// Producer 1
+a = 1; // A
+atomic_store_explicit(&b, 0, memory_order_seq_cst); // B
+
+// Producer 2
+a = 2; // C
+atomic_store_explicit(&b, 0, memory_order_release); // D
+
+// Consumer 1
+c = atomic_load_explicit(&b, memory_order_seq_cst); // E
+d = a; //F
+
+// Consumer 2
+c = atomic_load_explicit(&b, memory_order_seq_cst); // G
+d = a; // H</code></pre>
+			<p>
+			If we know one thread observes <code class="code_background">A->B->G->H->E->F</code> then we know every other thread will observe this same ordering. However, since D is only a release, then we also require C->D and any load on <code>b</code> that takes place after D must see C->D. That means one thread may observe <code class="code_background">A->B->C->D->G->H->E->F</code> and another thread <code class="code_background">C->D->A->B->G->H->E->F</code>.
+			<p>
+			There is one subtle consequence of Release-Acquire that seems unintuitive at first:
+			<p>
+			<pre><code>// Thread 1
+atomic_store_explicit(&a, 1, memory_order_release); // A
+c = atomic_load_explicit(&b, memory_order_acquire); // B
+
+// Thread 2
+atomic_store_explicit(&b, 1, memory_order_release); // C
+d = atomic_load_explicit(&a, memory_order_acquire); // D</code></pre>
+			<p>
+			Acquire-Release guarantees no operations before a store can be moved after it, and no operations after a load can be moved before it. This means it's possible B gets re-ordered ahead of A and D ahead of C. As such, a thread can observe <code class="code_background">B->D->A->C</code>, where they would find the value of <code>a</code> and <code>b</code> would be whatever these were initialized to. Neither would have the value 1, which at first seems perplexing.
+			<p>
+			We are told Sequential Consistency fixes this problem and guarantees at least one of the two variables is set to 1. But is that true?
+			<p>
+			<pre><code>// Thread 1
+atomic_store_explicit(&a, 1, memory_order_seq_cst); // A
+c = atomic_load_explicit(&b, memory_order_seq_cst); // B
+
+// Thread 2
+atomic_store_explicit(&b, 1, memory_order_seq_cst); // C
+d = atomic_load_explicit(&a, memory_order_seq_cst); // D</code></pre>
+			<p>
+			Recall that Sequential Consistency provides the same guarantee as Release-Acquire and also imposes a total ordering. But we just saw Release-Acquire can allow a thread to observe <code class="code_background">B->D->A->C</code>. Doesn't adding a total order change nothing about this scenario then, except that it ensures everyone sees this ordering rather than possibly only one thread?
+			<p>
+			That seems right. So what's going on? Remember, Release-Acquire is spread across two separate tags. The <code>memory_order_release</code> prevents prior writes from being re-ordered after this point. The <code>memory_order_acquire</code> prevents later writes from being re-ordered prior to this point. But Sequential Consistency is only a single tag. The only way to implement Release-Acquire in a single tag is to perform both, which is what <code>memory_order_acq_rel</code> does.
+			<p>
+			Because both release and acquire are performed, no earlier writes can come later <i>and</i> no later writes can come earlier. This means thread 1 must observe <code class="code_background">A->B</code> and thread 2 must observe <code class="code_background">C->D</code>. Either A must happen before C or vice versa. Thus, we are never in a situation where both <code>c</code> and <code>d</code> have no been updated. At least one of them, and possibly both, will be 1. And whatever order is observed on one thread will be seen by everyone. This means we won't have a scenario where someone sees <code>c</code> as 1 and <code>d</code> non-1, but another sees <code>d</code> as 1 and <code>c</code> non-1.
+			<p>
+			To implement Sequential Consistency on any platform, a full memory barrier must be used. A full memory barrier (or fence) is an instruction which does not allow earlier instructions to be re-ordered after it, nor later instructions to come before it.
+			<p>
+			This can become a performance bottleneck if you are performing a lot of Sequentially Consistent operations. This happens often since the non-explicit atomic functions are Sequentially Consistent and many people fear the explicit functions due to being intimidated by the memory model.
+			<p>
+			Often Release-Acquire semantics are strong enough for what you need. Consider that a mutex provides a Release-Acquire memory order guarantee and not Sequential Consistency.
+			<p>
+			<span class="article_navigation"><a href="release_acquire_mem_order.html">&lt Atomics: Release-Acquire Memory Order</a> | <a href="../articles.html">Other Articles &gt</a></span>
+			</div>
+	</body>
+</html>

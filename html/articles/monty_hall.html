@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>A Simple Monty Hall Proof</title>
+		<meta name="description" content="Nick Nadeau's article: A Simple Monty Hall Proof.">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<link href="https://fonts.googleapis.com/css?family=Montserrat:100" rel="stylesheet">
+		<link href="../styles/style.css" rel="stylesheet">
+	</head>
+	<body>
+		<div id="name" class="title">Nick Nadeau</div>
+		<div id="links" class="links">
+			<span id="about-link" class="link"><a href="../index.html">About</a></span>
+			|
+			<span id="github-link" class="link"><a href="https://github.com/nicknadeau">Github</a></span>
+			|
+			<span id="articles-link" class="link"><a href="../articles.html">Articles</a></span>
+		</div>
+		<div id="article-title" class="article_title">A Simple Monty Hall Proof</div>
+		<div id="body" class="article_body">
+			I've seen a few different explanations of the unintuitive Monty Hall problem, but wanted to jot down a proof of my own. Has anybody else ever come up with this proof before? Very likely. I don't know. I haven't looked very hard. But I came up with it, at least, and wanted to share.
+			<p>
+			First, a quick recap of the problem. There are three doors and behind one of them is a prize. The other two have duds. You are asked to select a door. Once you do, one of the other two doors will be opened to reveal what is behind it - but the door that is opened will always be one that has a dud. You are then asked whether you would like to keep your original selection or instead select the only other unopened door. What should you do?
+			<p>
+			It turns out, you should always choose the other door. If you do, the odds of you winning the prize are 67%. If you stay put, your odds are 33%. To many this feels counter-intuitive: there are two doors and one has the prize, doesn't that mean there's a 50% chance either way?
+			<p>
+			Let's get to the proof then. When you are first asked to select one of the three doors, your odds of selecting the prize are 33%. All three doors have the same 1/3 chance, which sums to 100%. When one of the other two doors is then opened, it does not change your odds at all. Why should it? We aren't moving the prize around behind the scenes. All we are doing is opening a door. That means your odds are still 33%. Since we are guaranteed the door that is opened has a dud, we now know the odds of it having the prize are 0%. This new information means we can deduce the remaining door has the other 67% of the odds.
+			<p>
+			Pretty obvious, right?
+			<p>
+			<span class="article_navigation"><a href="../articles.html">&lt Other Articles</a> | <a href="top_down_coding.html">Top-Down Coding &gt</a></span>
+		</div>
+	</body>
+</html>

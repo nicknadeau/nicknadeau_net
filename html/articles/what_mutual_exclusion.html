@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>What Is Mutual Exclusion?</title>
+		<meta name="description" content="Nick Nadeau's article: What Is Mutual Exclusion?">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<link href="https://fonts.googleapis.com/css?family=Montserrat:100" rel="stylesheet">
+		<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css", rel="stylesheet">
+		<link href="../styles/style.css" rel="stylesheet">
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+		<script src="//cdnjs.cloudflare.com/ajax/libs/highlightjs-line-numbers.js/2.8.0/highlightjs-line-numbers.min.js"></script>
+		<script>hljs.highlightAll(); hljs.initLineNumbersOnLoad();</script>
+	</head>
+	<body>
+		<div id="name" class="title">Nick Nadeau</div>
+		<div id="links" class="links">
+			<span id="about-link" class="link"><a href="../index.html">About</a></span>
+			|
+			<span id="github-link" class="link"><a href="https://github.com/nicknadeau">Github</a></span>
+			|
+			<span id="articles-link" class="link"><a href="../articles.html">Articles</a></span>
+		</div>
+		<div id="article-title" class="article_title">What Is Mutual Exclusion?</div>
+		<div id="body" class="article_body">
+			Mutual exclusion appears in multi-threaded programming. If you are unfamiliar with threads, check out <span id="threads-link" class="link"><a href="what_threads.html">What Are Threads?</a></span>. I'm assuming you have that background.
+			<p>
+			Let's write a program that launches two threads. Each thread will increment a local variable named <code>count</code> a million times and exit. Let's see what happens.
+			<p>
+			<pre><code class="language-c">#include &ltstdio.h&gt
+#include &ltstdint.h&gt
+#include &ltpthread.h&gt
+
+
+static void *increment(void *arg) {
+	uint32_t count = 0;
+	for (int i = 0; i < 1000000; i++) {
+		count += 1;
+	}
+	printf("Thread exiting. Final value of count: %u\n", count);
+	return NULL;
+}
+
+int main(int argc, const char **argv) {
+	pthread_t thread1, thread2;
+
+	pthread_create(&thread1, NULL, increment, NULL);
+	pthread_create(&thread2, NULL, increment, NULL);
+
+	pthread_join(thread1, NULL);
+	pthread_join(thread2, NULL);
+
+	return 0;
+}</code></pre>
+			<p>
+			Let's compile and run the program (the code is in a file named <code>threads.c</code>) and see what happens:
+			<p>
+			<code class="terminal">$ gcc -Wall -o threads threads.c -lpthread
+$ ./threads
+Thread exiting. Final value of count: 1000000
+Thread exiting. Final value of count: 1000000
+			</code>
+			<p>
+			You find it strange we told the two threads to begin at the same function. Wouldn't that mean they are both inside the same function at the same time? Wouldn't things go horribly wrong?
+			<p>
+			If they actually were, yes, things would go awry. But that's not what is happening. Both threads indeed begin their execution at the same function. But the instructions inside that function are within separate <i>Execution Contexts</i>. It's better to think of it as each thread has a copy of the <code>increment</code> function, and executes the code in its own copy.
+			<p>
+			Both threads create a variable named <code>count</code>, whose initial value is zero. These are different variables. Their memory is located in completely different places. This is why, after incrementing the variable a million times, they both print off the same value - one million. There's no magic going on.
+			<p>
+			Let's make a tiny modification. Let's have both threads increment the same variable, rather than two different ones. We can declare the <code>count</code> variable as a global variable, so that both threads can access it. After both are done modifying it, the main thread will print its value off:
+			<pre><code class="language-c">#include &ltstdio.h&gt
+#include &ltstdint.h&gt
+#include &ltpthread.h&gt
+
+static uint32_t count = 0;
+
+
+static void *increment(void *arg) {
+	for (int i = 0; i < 1000000; i++) {
+		count += 1;
+	}
+	return NULL;
+}
+
+int main(int argc, const char **argv) {
+	pthread_t thread1, thread2;
+
+	pthread_create(&thread1, NULL, increment, NULL);
+	pthread_create(&thread2, NULL, increment, NULL);
+
+	pthread_join(thread1, NULL);
+	pthread_join(thread2, NULL);
+
+	printf("Final value of count: %u\n", count);
+
+	return 0;
+}</code></pre>
+			<p>
+			Let's compile and run the program a few times and see what we get:
+			<p>
+			<code class="terminal">$ gcc -Wall -o threads threads.c -lpthread
+$ ./threads 
+Final value of count: 1224707
+$ ./threads 
+Final value of count: 1055618
+$ ./threads 
+Final value of count: 1095313
+$ ./threads 
+Final value of count: 1087191
+$ ./threads 
+Final value of count: 1053937</code>
+			<p>
+			Strange. We have two threads. Each increments <code>count</code> a million times. It should be two million. But it's not. In fact, it's a different value every time, and much closer to one million than two. What's going on here?
+			<p>
+			An analogy will help.
+			<p>
+			Imagine we have two people, Bob and Alice, sitting at a desk together. These are our two threads. Both have a stack of 10 pieces of paper and a marker in front of them. There is also a sheet of paper at the centre of the table with the number zero written on it. This central paper represents the global <code>count</code> variable.
+			<p>
+			We give Bob and Alice the exact same instructions. They must do the following steps a total of 10 times (more manageable than a million): read the number written on the central piece of paper, write down that number plus one onto one of their own papers, and then place that sheet over the central piece of paper. Hence, they are both incrementing <code>count</code>.
+			<p>
+			When they finish, the number written on the top-most central piece of paper is the final result.
+			<p>
+			Notice what happens if Bob and Alice are nearly equally fast at their tasks. They will both look up and see the value 0 on the central sheet. They will then write down the value 1 on their own sheet. Finally, they will both place this value 1 in the centre. Two increments were performed, but the central number had values: 0, 1, 1.
+			<p>
+			If this pattern continues, the end result will be 10 rather than 20, since half the increments are redundant. If either Bob or Alice is faster than the other, we'll end up with something larger than 10, but likely still quite a bit less than 20.
+			<p>
+			That's exactly what's going on with our threads, and this is why nearly half the increments are lost (the final value is close to one million, not two). The problem is both the threads are reading and writing to a shared piece of memory as fast as they can, without any regard for the other.
+			<p>
+			If we can get Bob and Alice to coordinate their activities, we can get the right result. This is the problem <i>mutual exclusion</i> solves.
+			<p>
+			Let's solve the problem in our analogy first and then translate it into code.
+			<p>
+			One thing we can do is put up an opaque barrier in front of Bob, so he can't see the central piece of paper. We can do the same to Alice. In a little tray between Bob and Alice, we place a key. This key unlocks the barrier. When the barrier is unlocked, it is lowered so that the person has access to the central piece of paper. The key can also be used to lock the barrier, which causes it to raise back up.
+			<p>
+			Here are Bob and Alice's new instructions. First, take the key from the tray or wait until it is placed back there. Next, unlock the barrier. Now go through the same 3 steps as before: read the central number, write its increment on your own piece of paper and then place that in the centre. Finally, lock the barrier and place the key back in the tray. Repeat 10 times.
+			<p>
+			There is only one key. This means either both barriers are up or exactly one barrier is down. Both barriers are never down at the same time. Thus, only Bob or Alice is performing the increment while the other person waits. When the other person lowers their barrier, they see the new number and increment it. No matter how much faster one person is than the other, we will end with the value 20 in the centre.
+			<p>
+			We call this mutual exclusion. Both parties are mutually excluding the other from accessing the data. In C, there is a special object called a <code>mutex</code> that is used to implement mutual exclusion.
+			<p>
+			In our analogy, Bob and Alice unlock the barrier, do some work, and then lock it again. Think of the mutex as the barrier. We first acquire the mutex's lock using <code>pthread_mutex_lock</code> so we can unlock the barrier. And when we finish, we relinquish the mutex's lock with <code>pthread_mutex_unlock</code>.
+			<p>
+			Here's our new code:
+			<p>
+			<pre><code class="language-c">#include &ltstdio.h&gt
+#include &ltstdint.h&gt
+#include &ltpthread.h&gt
+
+static pthread_mutex_t lock;
+static uint32_t count = 0;
+
+
+static void *increment(void *arg) {
+	for (int i = 0; i < 1000000; i++) {
+		pthread_mutex_lock(&lock);
+		count += 1;
+		pthread_mutex_unlock(&lock);
+	}
+	return NULL;
+}
+
+int main(int argc, const char **argv) {
+	pthread_t thread1, thread2;
+
+	pthread_mutex_init(&lock, NULL);
+
+	pthread_create(&thread1, NULL, increment, NULL);
+	pthread_create(&thread2, NULL, increment, NULL);
+
+	pthread_join(thread1, NULL);
+	pthread_join(thread2, NULL);
+
+	printf("Final value of count: %u\n", count);
+
+	return 0;
+}</code></pre>
+			<p>
+			Let's compile and run this 5 times just like with the previous example:
+			<code class="terminal">$ gcc -Wall -o threads threads.c -lpthread
+$ ./threads
+Final value of count: 2000000
+$ ./threads
+Final value of count: 2000000
+$ ./threads
+Final value of count: 2000000
+$ ./threads
+Final value of count: 2000000
+$ ./threads
+Final value of count: 2000000
+			</code>
+			<p>
+			<span class="article_navigation"><a href="what_threads.html">&lt What Are Threads?</a> | <a href="intro_atomics.html">Introduction To Atomics &gt</a></span>
+		</div>
+	</body>
+</html>

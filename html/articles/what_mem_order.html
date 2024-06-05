@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Atomics: What Is Memory Order?</title>
+		<meta name="description" content="Nick Nadeau's article: Atomics: What Is Memory Order?">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<link href="https://fonts.googleapis.com/css?family=Montserrat:100" rel="stylesheet">
+		<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css", rel="stylesheet">
+		<link href="../styles/style.css" rel="stylesheet">
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+		<script src="//cdnjs.cloudflare.com/ajax/libs/highlightjs-line-numbers.js/2.8.0/highlightjs-line-numbers.min.js"></script>
+		<script>hljs.highlightAll(); hljs.initLineNumbersOnLoad();</script>
+	</head>
+	<body>
+		<div id="name" class="title">Nick Nadeau</div>
+		<div id="links" class="links">
+			<span id="about-link" class="link"><a href="../index.html">About</a></span>
+			|
+			<span id="github-link" class="link"><a href="https://github.com/nicknadeau">Github</a></span>
+			|
+			<span id="articles-link" class="link"><a href="../articles.html">Articles</a></span>
+		</div>
+		<div id="article-title" class="article_title">Atomics: What Is Memory Order?</div>
+		<div id="body" class="article_body">
+			Peeking inside <code>stdatomic.h</code>, we see each of the <code>atomic_*</code> functions has a corresponding explicit function, denoted by the <code>_explicit</code> suffix. The explicit functions take one extra argument: a <code>memory_order</code> enum.
+			<p>
+			At first this may seem strange. Isn't the purpose of an atomic function to ensure the thing executes as a single atomic operation - what does memory order have to do with it? You may also be wondering what memory order even is to begin with. Let's clear this up first and then answer that question.
+			<p>
+			Memory order simply refers to the order in which operations on regions of memory occur. You may be more comfortable thinking of operations on variables, since that's the semantics programming languages use. But a variable is just some region of memory whose value is whatever the bits in that region represent. There are 2 fundamental operations on memory: load (read) and store (write).
+			<p>
+			Memory order was already hinted at in the <a href="intro_atomics.html">Intro To Atomics</a> article. But let's spell it out now.
+			<p>
+			Let's consider a situation where we have a multi-threaded program and it is not making use of any synchronization primitives. That is, no variables are atomic, there are no mutexes or anything else. Just normal variables being accessed by the threads. Each thread itself has a well-defined memory order. Lines of source code which occur before other lines (within the same thread!) must <i>appear</i> as though they executed prior to the other lines. And every line must <i>appear</i> to execute fully before the next. However, any operations on the same memory region across threads is undefined. There is no memory order at all!
+			<p>
+			This means if thread 1 performs an operation <code>X</code> on a variable <code>M</code>, and thread 2 performs an operation <code>Y</code> on <code>M</code>, any of the following scenarios are possible: a) thread 1 observes Y fully completing and then X, b) thread 1 observes X fully completing and then Y, c) thread 1 observes Y in an intermediate state and then X, d) thread 1 observes X in an intermediate state and then Y. The same 4 possibilities may be observed in thread 2. And most importantly, both threads may observe completely different orderings! So thread 1 may see Y complete then X, whereas thread 2 sees X partially complete and then Y.
+			<p>
+			This is commonly referred to as read and write tearing or a "data race", when intermediate states are visible. The article <a href="what_mutual_exclusion.html">What Is Mutual Exclusion?</a> demonstrates this with the classic example of incrementing a normal variable in two threads. Many increments are lost because the threads are reading intermediate states. This can be rectified with a mutex, because a mutex imposes a sequentially-consistent memory ordering (we will get there).
+			<p>
+			Okay, the situation is a little more complicated.
+			<p>
+			You probably noticed I italicized the word "appears" in a paragraph above. A line of source code that comes before another must appear to execute first. What this means is any consequences of the former line must be visible to the latter line. But there are plenty of situations where lines of code could be swapped and everything would remain the same. If they have no relationship to one another, for example. The compiler may re-order instructions to optimize the code. It is allowed to do this as long as the code appears to run in the correct order. But it's not just the compiler. The CPU may re-order instructions too for different reasons.
+			<p>
+			A single-threaded program works fine because the memory order is defined within a single thread. But clearly a multi-threaded program with an undefined memory order is hardly useful at all. Atomics are meant to be an alternative to mutexes. But if atomics had no way of impacting memory order (like a mutex does), then it wouldn't be a very useful addition at all. That's why memory order shows up with atomics.
+			<p>
+			There are 6 <code>memory_order</code> enums. Each one falls into one of 4 memory order classes. These classes provide different levels of memory ordering guarantees. They are hierarchical in that each class does everything the lower class does and more. The next articles will dive into the details of these 4 memory order classes.
+			<p>
+			<span class="article_navigation"><a href="intro_atomics.html">&lt Introduction To Atomics</a> | <a href="relaxed_mem_order.html">Atomics: Relaxed Memory Order &gt</a></span>
+			</div>
+	</body>
+</html>

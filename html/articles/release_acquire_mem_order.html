@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Atomics: Release-Acquire Memory Order</title>
+		<meta name="description" content="Nick Nadeau's article: Atomics: Release-Acquire Memory Order">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<link href="https://fonts.googleapis.com/css?family=Montserrat:100" rel="stylesheet">
+		<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css", rel="stylesheet">
+		<link href="../styles/style.css" rel="stylesheet">
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+		<script src="//cdnjs.cloudflare.com/ajax/libs/highlightjs-line-numbers.js/2.8.0/highlightjs-line-numbers.min.js"></script>
+		<script>hljs.highlightAll(); hljs.initLineNumbersOnLoad();</script>
+	</head>
+	<body>
+		<div id="name" class="title">Nick Nadeau</div>
+		<div id="links" class="links">
+			<span id="about-link" class="link"><a href="../index.html">About</a></span>
+			|
+			<span id="github-link" class="link"><a href="https://github.com/nicknadeau">Github</a></span>
+			|
+			<span id="articles-link" class="link"><a href="../articles.html">Articles</a></span>
+		</div>
+		<div id="article-title" class="article_title">Atomics: Release-Acquire Memory Order</div>
+		<div id="body" class="article_body">
+			The Release-Acquire memory class has three associated enums: <code>memory_order_release</code>, <code>memory_order_acquire</code> and <code>memory_order_acq_rel</code>. We have seen <code>memory_order_release</code> before. It was used on the store-side of Release-Consume. The new <code>memory_order_acquire</code> tag is used on loads to force Release-Acquire semantics. As the name implies, <code>memory_order_acq_rel</code> specifies both the release and acquire tags for a single operation. We will deal with <code>memory_order_acq_rel</code> at the end. Our main focus is the release and acquire tags.
+			<p>
+			Release-Acquire semantics guarantee the following. If thread A performs some write operations (which may be non-atomic or relaxed atomic) before performing an atomic store on a variable <code>M</code> with the <code>memory_order_release</code> tag, then all of those writes performed by A will be visible in the same order to any thread that loads <code>M</code> with the <code>memory_order_acquire</code> tag.
+			<p>
+			This is much stronger than Release-Consume, which only guarantees visibility to writes that carry a dependency to <code>M</code> and nothing else.
+			<p>
+			Release-Acquire synchronizes the two threads on a much more complete level. And frankly, a level that is much easier for programmers to reason about.
+			<p>
+			Let's look at an example:
+			<p>
+			<pre><code class="language-c">#include &ltstdio.h&gt
+#include &ltstdint.h&gt
+#include &ltstdbool.h&gt
+#include &ltstdatomic.h&gt
+#include &ltpthread.h&gt
+
+static uint32_t a = 1;
+static uint32_t b = 2;
+static atomic_uint c = 3;
+
+
+static void *producer(void *arg) {
+	a = 4; // A
+	b = 5; // B
+	atomic_store_explicit(&c, b, memory_order_release); // C
+	return NULL;
+}
+
+static void *consumer(void *arg) {
+	uint32_t cval;
+	while (true) {
+		cval = atomic_load_explicit(&c, memory_order_acquire);
+		if (cval != 3) {
+			break;
+		}
+	}
+	uint32_t aval = a;
+	uint32_t bval = b;
+	printf("Consumer read: a=%u, b=%u, c=%u\n", aval, bval, cval);
+	return NULL;
+}
+
+int main(int argc, const char **argv) {
+	pthread_t thread1, thread2;
+	 
+	pthread_create(&thread1, NULL, consumer, NULL);
+	pthread_create(&thread2, NULL, producer, NULL);
+	 
+	pthread_join(thread1, NULL);
+	pthread_join(thread2, NULL);
+	return 0;
+}</code></pre>
+			<p>
+			Let's put this code in a file named <code>release_acquire.c</code> and verify it works:
+			<p>
+			<code class="terminal">$ gcc -Wall -o release_acquire release_acquire.c -lpthread
+$ ./release_acquire 
+Consumer read: a=4, b=5, c=5</code>
+			<p>
+			In this case both <code>a</code> and <code>b</code> are regular non-atomic variables. The producer writes to both of them and then does an atomic store on <code>c</code>. The consumer, on the other hand, atomically loads <code>c</code> until it sees the value has changed (indicating the producer has done the store, completing the Release-Acquire transaction). After that point, it reads <code>a</code> and <code>b</code> non-atomically and then prints all 3 values off.
+			<p>
+			Because of Release-Acquire, the writes to <code>a</code> and <code>b</code> in the producer become visible to the consumer after the successful load. Both threads see the same order <code class="code_background">A->B->C</code>. So it is completely safe for the consumer to now read the value of these non-atomic variables directly.
+			<p>
+			This probably feels wrong to people who are used to thinking of atomics as operations that only provide an atomic guarantee to a specific operation and have no bearing on anything else. But atomics provide synchronization guarantees on top of that, like this.
+			<p>
+			Notice that operation A does not carry a dependency to the atomic store at all. Yet the consumer is still guaranteed to observe it. If we changed the consumer's tag to <code>memory_order_consume</code>, then it would be guaranteed to see <code class="code_background">B->C</code> in the original order, but absolutely no guarantees about A would be made. This means such a consumer may read the value of <code>a</code> to be 1 or 4, or even in an intermediate state if the operation A consisted of multiple micro instructions.
+			<p>
+			Like Release-Consume, these memory order guarantees are only made between the releasing and acquiring threads. If a thread does not atomically acquire <code>c</code> then memory ordering with respect to the three variables is undefined for it.
+			<p>
+			It is sometimes helpful to also think of Release-Acquire as forming a memory barrier (often called a memory fence) at the store and load points. Everything before the store cannot be re-ordered after the store because the acquiring thread must observe the same memory order. On the flip side, no operations which occur after the load can be re-ordered before it.
+			<p>
+			This last point feels redundant. No operations after the load can be re-ordered before it. But this all happens in a single thread, which already guarantees code-line memory order by default.
+			<p>
+			I will try to justify this as best I can. Admittedly, I was unable to find clarification here and this is the only reasoning I could come up with on my own.
+			<p>
+			Consider a read-modify-write atomic operation like <code>atomic_fetch_add</code>, which returns the previous value of the variable and then adds the incoming value to the variable in a single atomic operation. Suppose we had the following:
+			<pre><code>// Thread 1
+a = 1; // A
+b = 2; // B
+int c = atomic_fetch_add(&a, 1, memory_order_release); // C
+b = 3; // D
+// Thread 2
+if (atomic_load(&a, memory_order_acquire) != 2)
+	d = b;</code></pre>
+			<p>
+			The release of operation C ensures thread 2 will observe A and B when acquiring C. This means A and B can not be re-ordered after C. But, it is perfectly legal to re-order D before C since the two operations are independent. That is, from the POV of thread 1, nothing <i>appears</i> re-ordered. From thread 2's perspective, the value of <code>d</code> may either be 2 or 3, because it may either observe <code class="code_background">A->B->C->D</code> or something like <code class="code_background">A->B->D->C</code>. The only guarantee is that A is before B is before C. D could be placed anywhere.
+			<p>
+			If we then flipped this to use <code>memory_order_acquire</code> instead, what would happen?
+			<p>
+			<pre><code>// Thread 1
+a = 1; // A
+b = 2; // B
+int c = atomic_fetch_add(&a, 1, memory_order_acquire); // C
+b = 3; // D
+// Thread 2
+if (atomic_load(&a, memory_order_acquire) != 2)
+	int d = b;</code></pre>
+			<p>
+			The acquire of operation C ensures operation D does not happen before C. But it makes no guarantees about A and B relative to C. Since C depends on A, this memory order will be preserved by default from thread 1's POV, but B may happen after C. From thread 2's perspective, it may see the value of <code>b</code> as either 2 or whatever its initial state was because B may happen after its load. But it will be guaranteed that operation D has not happened yet, so it will not see the value of <code>b</code> as 3.
+			<p>
+			This subtlety is the reason why, as far as I can tell, <code>memory_order_acq_rel</code> exists. So that you can have a synchronization point that guarantees operations before it do not get re-ordered after it, and operations after it do not get re-ordered before it from the vantage point of another thread. Sticking with our example, the value of <code>d</code> now has one possibility: it must be 2:
+			<p>
+			<pre><code>// Thread 1
+a = 1; // A
+b = 2; // B
+int c = atomic_fetch_add(&a, 1, memory_order_acq_rel); // C
+b = 3; // D
+// Thread 2
+if (atomic_load(&a, memory_order_acquire) != 2)
+	int d = b;</code></pre>
+			<p>
+			I am uncertain of this explanation. If anyone can correct me on this point, that would be much appreciated.
+			<p>
+			For the majority of cases, Release-Acquire semantics are likely all you need. But there is still one more memory order, which is even stronger.
+			<p>
+			<span class="article_navigation"><a href="release_consume_mem_order.html">&lt Atomics: Release-Consume Memory Order</a> | <a href="seq_con_mem_order.html">Atomics: Sequentially Consistent Memory Order &gt</a></span>
+			</div>
+	</body>
+</html>

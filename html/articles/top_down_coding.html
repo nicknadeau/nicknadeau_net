@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Top-Down Coding</title>
+		<meta name="description" content="Nick Nadeau's article: Top-Down Coding.">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<link href="https://fonts.googleapis.com/css?family=Montserrat:100" rel="stylesheet">
+		<link href="../styles/style.css" rel="stylesheet">
+	</head>
+	<body>
+		<div id="name" class="title">Nick Nadeau</div>
+		<div id="links" class="links">
+			<span id="about-link" class="link"><a href="../index.html">About</a></span>
+			|
+			<span id="github-link" class="link"><a href="https://github.com/nicknadeau">Github</a></span>
+			|
+			<span id="articles-link" class="link"><a href="../articles.html">Articles</a></span>
+		</div>
+		<div id="article-title" class="article_title">Top-Down Coding</div>
+		<div id="body" class="article_body">
+			Programmers are beasts of detail. Our minds are drawn first to the particular. That's where the fun is, after all. As such, many of us have developed a bad habit of writing code bottom-up.
+			<p>
+			When you are implementing some new piece of functionality, what you are doing is writing a series of functions which are hierarchically laid out in a call tree. Sure, it may be more of a forest in some cases, but Divide and Conquer folks - the tree is the essence. So what you have is something like this:
+			<p>
+			<center><img src="../images/call_tree.png" alt="call tree"/></center>
+			<p>
+			The leaf nodes are typically the most interesting to work on. They are also the only nodes which can be completed in isolation, since they have no dependencies. For these reasons, they feel like an attractive place to start.
+			<p>
+			If you've done no planning at all, you'll get burned by this. If you've planned, you'll fare okay, but you'll still encounter the inevitable friction of when theory meets practice.
+			<p>
+			The thing is, a well-designed system has an elegance to it. It solves a problem in as simple a way as it can, while also working within the constraints of its environment. Most often, the difference between theory and practice manifests in the subtle ways data is forced to flow through your system, which, at a high-level, is nearly impossible to foresee. Remember, code is just data flow. You are pushing data into functions and pulling data out of them. The implementation details of such flow are always surprising after leaving the whiteboard behind.
+			<p>
+			Spending time thinking about the flow and the optimal design is crucial before getting started. You won't get it perfect. You will have to make adjustments along the way for the reasons above, but at least you minimize the risk of having to completely overhaul your solution due to an unforeseen complication.
+			<p>
+			If you haven't planned ahead, then you have no clear idea of your call tree. Maybe you've got a few functions floating around, which your instincts have told you are needed, and some hand-wavy relationships between them. In this case, you naturally begin bottom-up, at the leaf nodes, because they're the only part of your hazy notions with any concretness to them.
+			<p>
+			You will make a couple kinds of mistakes with this unplanned bottom-up approach, each of which can be quite costly. You may over-generalize your lower-level functions because of vague notions of who may want to use them and for what purposes. You will invariably declare your function arguments incorrectly, because you will be thinking of the function in an idealized vacuum, rather than knowing the details of how your design and environment will impose certain data exchanges. You may write a function that's not needed at all because of a murky understanding or a later change of direction due to unnoticed requirements. You may design something overly complex because of a lack of appreciation for the problem, and understanding how it may fit into the architecture.
+			<p>
+			Planning can help some of these costly mistakes be avoided, but not all. Even with planning, as you build bottom-up, you are bound to incorrectly anticipate data flow requirements and to therefore shape your functions completely wrong. Moreover, by building up these long legs of a call tree independently, you've got to pray when you get to the top everything fits together nicely. For anything non-trivial that won't happen.
+			<p>
+			A top-down approach is almsot always preferable. There are times it isn't, but they are uncommon. There are also times it is infeasible, but often programmers lazily dismiss a top-down approach as impractical because of the uneasy feeling of implementing functions that depend on unimplemented functionality. In order to write the <code>display_search_results</code> function in the above example, you depend on four other functions to get the job done. But they don't exist yet. Programmers like certainty. This rubs them the wrong way.
+			<p>
+			My advice is get used to it. Everything you write does not have to be fully operational. You can make incremental progress through a series of partial implementations as well. And as you'll find, there are many ways of approaching top-down coding in ways that can still yield satisfying intermediate results. It does not at all have to be a waterfall-esque situation, where you spend weeks writing functions without anything demonstrable until finally you finish off the last function call and the lights turn on.
+			<p>
+			The benefit of working top-down is that you minimize surprises. At the top level, your requirements are perfectly clear. You know what needs to be done. Sure, the helper routines you need don't exist yet, and so you've got to rely on stubs until you get to them, but as you proceed down the tree the beauty is that at every level you fully understand how the data flows and what the current requirements are. You're never in the dark.
+			<p>
+			This minimizes the number of surprises you encounter along the way. It also de-riskes situations where you haven't properly planned, since proceeding top-down has far fewer unknowns at each stage than bottom-up. I am not advocating skipping planning, just providing extra incentive to the many I know inevitably will.
+			<p>
+			But hold on. Things are never black and white. Building top-down can have its own surprises too. It's often the case you stub out a lower-level function and in theory all looks good, until you drill into the details of it and realize it's just not going to work this way. That's fine. The benefit is that, at every step of the way, you fully understand the design and flow of your data. So, now that you've learned you need to make an adjustment, you are in the superior position of also having all the information you need to adjust optimally.
+			<p>
+			Overall, one of the most compelling reasons for a top-down approach for me personally is that at every step of the way you understand the full scope of what you're building. You begin from the real requirements that matter to the end-user, and you implement from there, building exactly what's needed. In contrast, bottom-up never has a full grasp of the total scope. It is always confusing the biased view of the lower level, the things which look important from there, with the real end requirements of the system. You typically end up with an implementation that feels as though it guessed its way through a series of unexpected problems, even if the over-arching design was thought through.
+			<p>
+			<span class="article_navigation"><a href="monty_hall.html">&lt A Simple Monty Hall Proof</a> | <a href="recursion.html">A Better Way To Think Of Recursion &gt</a></span>
+		</div>
+	</body>
+</html>

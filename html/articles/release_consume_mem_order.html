@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Atomics: Release-Consume Memory Order</title>
+		<meta name="description" content="Nick Nadeau's article: Atomics: Release-Consume Memory Order">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<link href="https://fonts.googleapis.com/css?family=Montserrat:100" rel="stylesheet">
+		<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css", rel="stylesheet">
+		<link href="../styles/style.css" rel="stylesheet">
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+		<script src="//cdnjs.cloudflare.com/ajax/libs/highlightjs-line-numbers.js/2.8.0/highlightjs-line-numbers.min.js"></script>
+		<script>hljs.highlightAll(); hljs.initLineNumbersOnLoad();</script>
+	</head>
+	<body>
+		<div id="name" class="title">Nick Nadeau</div>
+		<div id="links" class="links">
+			<span id="about-link" class="link"><a href="../index.html">About</a></span>
+			|
+			<span id="github-link" class="link"><a href="https://github.com/nicknadeau">Github</a></span>
+			|
+			<span id="articles-link" class="link"><a href="../articles.html">Articles</a></span>
+		</div>
+		<div id="article-title" class="article_title">Atomics: Release-Consume Memory Order</div>
+		<div id="body" class="article_body">
+			Unlike the relaxed memory order, which only had a single enum (since it hardly did anything), this class has two: <code>memory_order_release</code> and <code>memory_order_consume</code>. The release corresponds to a store operation. Think of it as if in order to write to the variable you must first hold on it, and when you finish you release it.The consume corresponds to a load operation.
+			<p>
+			Release-Consume semantics introduce the idea of a dependency chain. We say instruction B is dependent upon A if the output of A is used as an input to B. We also say that A carried a dependency to B. A chain may consist of multiple operations:
+			<pre><code>int a = 0; // A
+int b = a + 1; // B
+int c = b + 1; // C</code></pre>
+			<p>
+			Here we say A carried its dependency to C. The dependency chain is <code class="code_background">A->B->C</code>.
+			<p>
+			We can have separate dependency chains too:
+			<p>
+			<pre><code>int a = 0; // A
+int b = 1; // B
+int c = a + 1; // C
+int d = b + 1; // D
+int e = -c; // E</code></pre>
+			<p>
+			Here we have the chains <code class="code_background">A->C->E</code> and <code class="code_background">B->D</code>.
+			<p>
+			Release-Consume semantics guarantee the following. If thread A performs an atomic store on variable <code>M</code> with the <code>memory_order_release</code> tag, and thread B performs an atomic load on <code>M</code> with the <code>memory_order_consume</code> tag, then the store on <code>M</code> in thread A and all prior operations which carried a dependency to that operation, will be visible to thread B with the dependency chains' orders preserved.
+			<p>
+			The only mention of an atomic variable is <code>M</code>. Consider the dependency chain <code class="code_background">A->B->M</code>, where A and B are normal non-atomic (or even relaxed atomic) operations. As long as an atomic store is perfomed on <code>M</code>, the thread which atomically loads <code>M</code> will observe the same exact chain of operations: <code class="code_background">A->B->M</code>.
+			<p>
+			This is a very misunderstood feature of atomics. Often atomics are thought of in isolation, as only providing guarantees to the atomic variable being operated on. That's untrue. Atomics can also be used as synchronization points, as in this case. In fact, the remaining two memory orders only build on the synchronizing capabilities of atomics.
+			<p>
+			The idea of synchronizing a dependency chain across threads may feel a little specialized. When is this actually useful? It is specialized, so you don't see these semantics much. But the most common use-case is when you want to build up the state of a structure non-atomically and then publish it safely to another thread.
+			<p>
+			In my article <a href="intro_atomics.html">Intro To Atomics</a> we saw we can mark a struct as atomic using <code>_Atomic</code>. The problem is, if its size exceeds a data word, a mutex is used for atomicity. Release-Consume is a far better way of sharing a struct:
+			<p>
+			<pre><code class="language-c">#include &ltstdio.h&gt
+#include &ltstdint.h&gt
+#include &ltstdbool.h&gt
+#include &ltunistd.h&gt
+#include &ltstdatomic.h&gt
+#include &ltpthread.h&gt
+
+typedef struct data
+{
+	uint64_t a;
+	uint64_t b;
+	uint64_t c;
+	uint64_t d;
+} data_t;
+
+static data_t *shared_data = NULL;
+
+
+static void *producer(void *arg) {
+	data_t *data = (data_t *) arg;
+	data->a = 1; // A
+	data->b = 2; // B
+	data->c = 3; // C
+	data->d = 4; // D
+	printf("Producer thread publishing data...\n");
+	atomic_store_explicit(&shared_data, data, memory_order_release); // E
+	return NULL;
+}
+
+static void *consumer(void *arg) {
+	while (true) {
+		data_t *data = atomic_load_explicit(&shared_data, memory_order_consume);
+		if (NULL != data) {
+			printf("Consumer thread received data: "
+				"{ a=%lu, b=%lu, c=%lu, d=%lu }\n"
+				, data->a, data->b, data->c, data->d
+			);
+			break;
+		}
+	}
+	return NULL;
+}
+
+int main(int argc, const char **argv) {
+	data_t data = {0};
+
+	pthread_t thread1, thread2;
+
+	// Start the consumer then producer with a delay to prove the atomicity.
+	pthread_create(&thread1, NULL, consumer, NULL);
+	sleep(1);
+	pthread_create(&thread2, NULL, producer, &data);
+
+	pthread_join(thread1, NULL);
+	pthread_join(thread2, NULL);
+
+	return 0;
+}</code></pre>
+			<p>
+			Let's put this code in a file named <code>release_consume.c</code> and verify it works:
+			<p>
+			<code class="terminal">$ gcc -Wall -o release_consume release_consume.c -lpthread
+$ ./release_consume 
+Producer thread publishing data...
+Consumer thread received data: { a=1, b=2, c=3, d=4 }</code>
+			<p>
+			This example can use an explanation. There are a few subtleties about Release-Consume to keep in mind.
+			<p>
+			Here, we publish the <code>data_t</code> struct from the producder to the consumer thread. To help prove things are working, we launch the consumer first and delay the producer by a full second. We create the <code>data_t</code> in <code>main</code> so the memory region is always valid. If we created it inside <code>producer</code>, the memory would be relinquished once the thread exits, and it's possible the consumer doesn't load it until after then. We could have stored it in global memory as well.
+			<p>
+			Lines 21-24 are normal non-atomic operations on a normal non-atomic <code>data_t</code> reference. Each line has a letter label, and the store has label E. There are 4 separate dependency chains here: <code class="code_background">A->E</code>, <code class="code_background">B->E</code>, <code class="code_background">C->E</code> and <code class="code_background">D->E</code>. None of the operations on lines 21-24 carry a dependency to each other. Rather, they all carry their dependency to line 26 because the variable they modify is then atomically stored against.
+			<p>
+			Release-Consume semantics guarantees that all operations which carry a dependency to E will be visible in any other thread which loads the atomic. That means lines 21-24 all carry over and are visible to the consumer.
+			<p>
+			There are a few subtleties to note.
+			<p>
+			First, the producer's print statement will always precede the consumer's print statement even though there is no dependency chain between them. Why? Remember, within a single thread the memory order is defined by the source code ordering. This means the print statement always precedes the atomic store. When the consumer eventually loads a non-NULL pointer it means, due to atomicity, the consumer store already happened. And within the consumer thread, the memory order dictates the print statement happens after the load.
+			<p>
+			Second, the actual ordering of dependency chain operations is only guaranteed inside a single chain. Here we have 4 separate chains. The order of operations in these 4 chains relative to another may be different for the consumer versus the producer. The operations may be re-ordered in the producer by the compiler or CPU since they are independent. Likewise, the consumer may witness its own order. In practice this doesn't make a difference since everything still <i>appears</i> to have executed in order. That's all that matters.
+			<p>
+			Finally, Release-Consume semantics only define their memory order in the threads which store and load the same atomic variable. If we have a third thread and it tried to access <code>sharedD_data</code> non-atomically, then absolutely no dependency chain memory order guarantees are provided. It may observe <code>data_t</code> as having none of the operations in lines 21-24 performed on it, all of them, or only some of them.
+			<p>
+			A final point before we wrap up.
+			<p>
+			There are hardware and software memory models. A hardware memory model provides guarantees to machine instruction re-ordering. A software memory model provides guarantees to how lines of source code are re-ordered. On <code>x86-64</code>, the hardware memory model is stronger than Release-Consume semantics. It is on par with Release-Acquire semantics, which my next article explores. For this reason, Relaxed, Release-Consume and Release-Acquire atomics have similar performance profiles on x86. There are still some performance benefits to the weaker models, but they are less pronounced and mostly due to the compiler. Even with a stronger hardware memory model, we cannot simply default to <code>memory_order_relaxed</code> on x86 and expect things to behave the same as Release-Consume or Release-Acquire. Signifying these memory classes is still important to prevent compiler re-ordering.
+			<p>
+			The <code>ARM</code> and <code>PowerPC</code> architectures, on the other hand, have hardware memory models as strong as Release-Consume semantics. Again, specifying Release-Consume is still important to prevent compiler re-ordering. This does mean, however, the performance difference between Release-Consume and Release-Acquire semantics will be substantial on these platforms.
+			<p>
+			The <code>DEC Alpha</code> is known for having the weakest hardware memory model. In this case, there is a notable performance difference between Relaxed and Release-Consume semantics.
+			<p>
+			<span class="article_navigation"><a href="relaxed_mem_order.html">&lt Atomics: Relaxed Memory Order?</a> | <a href="release_acquire_mem_order.html">Atomics: Release-Acquire Memory Order &gt</a></span>
+			</div>
+	</body>
+</html>

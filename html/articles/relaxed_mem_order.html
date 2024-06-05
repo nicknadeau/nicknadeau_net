@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Atomics: Relaxed Memory Order</title>
+		<meta name="description" content="Nick Nadeau's article: Atomics: Relaxed Memory Order">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<link href="https://fonts.googleapis.com/css?family=Montserrat:100" rel="stylesheet">
+		<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css", rel="stylesheet">
+		<link href="../styles/style.css" rel="stylesheet">
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+		<script src="//cdnjs.cloudflare.com/ajax/libs/highlightjs-line-numbers.js/2.8.0/highlightjs-line-numbers.min.js"></script>
+		<script>hljs.highlightAll(); hljs.initLineNumbersOnLoad();</script>
+	</head>
+	<body>
+		<div id="name" class="title">Nick Nadeau</div>
+		<div id="links" class="links">
+			<span id="about-link" class="link"><a href="../index.html">About</a></span>
+			|
+			<span id="github-link" class="link"><a href="https://github.com/nicknadeau">Github</a></span>
+			|
+			<span id="articles-link" class="link"><a href="../articles.html">Articles</a></span>
+		</div>
+		<div id="article-title" class="article_title">Atomics: Relaxed Memory Order</div>
+		<div id="body" class="article_body">
+			There is only one <code>memory_order</code> enum that falls into this class: <code>memory_order_relaxed</code>.
+			<p>
+			This memory order is the most minimal guarantee that can be made. Recall from <a href="what_mem_order.html">Atomics: What Is Memory Order?</a> that the memory order across threads is undefined. All the relaxed memory order does is define this cross-thread ordering. An undefined memory order means partial operations can be visible across threads. A defined memory order removes this possibility. In a defined memory order, every thread observes all operations as having a specific sequential order, so that no truly parallel access occurs.
+			<p>
+			Let's use an example to flesh this out, taken from <a href="https://en.cppreference.com/w/c/atomic/memory_order#Relaxed_ordering">cpp reference</a>:
+			<p>
+			<pre><code class=language-c">// Thread 1:
+r1 = atomic_load_explicit(y, memory_order_relaxed); // A
+atomic_store_explicit(x, r1, memory_order_relaxed); // B
+// Thread 2:
+r2 = atomic_load_explicit(x, memory_order_relaxed); // C
+atomic_store_explicit(y, 42, memory_order_relaxed); // D 
+			</code></pre>
+			Thread 1 by default has a memory order imposed on all of its own actions, so A->B is always what it will see. Likewise, thread 2 must see C->D. However, when we talk about how thread 1 observes each of these 4 operations, the only guarantee we have is that there is a coherent ordering. Aside from that, all of the 10 possible permutations may be observed by thread 1: <code class="code_background">A->B->C->D</code>, <code class="code_background">A->B->D->C</code>, <code class="code_background">A->C->B->D</code>, <code class="code_background">A->D->B->D</code>, <code class="code_background">A->C->D->B</code>, <code class="code_background">A->D->C->B</code>, <code class="code_background">C->A->B->D</code>, <code class="code_background">C->A->D->B</code>, <code class="code_background">D->A->B->C</code>, <code class="code_background">D->A->C->B</code>. In each case, A always occurs before B. That's the only rule.
+			<p>
+			On top of this, thread 2 has its own set of 10 possible permutations which it may observe. And the two threads are allowed to observe completely different orderings!
+			<p>
+			This means thread 1 may observe <code class="code_background">A->B->C->D</code>, in which case y will be 42 and x will be 0, and thread 2 may observe C->D->A->B, making both x and y 42.
+			<p>
+			An undefined memory order is absolute chaos, but this hardly seems much better. Sure, I don't have any read/write tearing, but that's it basically. You might wonder when you could ever make use of a relaxed memory order. The most prominent example is when multiple threads are incrementing a counter, which is a common pattern to assign unique identifiers to the threads:
+			<pre><code class="language-c">#include &ltstdio.h&gt
+#include &ltstdint.h&gt
+#include &ltpthread.h&gt
+#include &ltstdatomic.h&gt
+
+static atomic_uint nextId = 0;
+
+
+static void *thread_main(void *arg) {
+	uint32_t id = atomic_fetch_add_explicit(&nextId, 1, memory_order_relaxed);
+	printf("Thread #%u\n", id);
+	return NULL;
+}
+
+int main(int argc, const char **argv) {
+	pthread_t thread1, thread2, thread3, thread4;
+
+	pthread_create(&thread1, NULL, thread_main, NULL);
+	pthread_create(&thread2, NULL, thread_main, NULL);
+	pthread_create(&thread3, NULL, thread_main, NULL);
+	pthread_create(&thread4, NULL, thread_main, NULL);
+
+	pthread_join(thread1, NULL);
+	pthread_join(thread2, NULL);
+	pthread_join(thread3, NULL);
+	pthread_join(thread4, NULL);
+
+	return 0;
+}</code></pre>
+			<p>
+			The only guarantee we need on line 10 is atomicity. It doesn't matter what order the threads grab their id in, because the atomicity guarantee tells us the 4 attempts will happen in a single sequential order. Each thread will read a unique current value and increment it. Memory order doesn't matter at all.
+			<p>
+			If we place this code in a file named <code>relax.c</code>, compile and run it, everything looks good:
+			<p>
+			<code class="terminal">$ gcc -Wall -o relaxed relaxed.c -lpthread
+$ ./relaxed 
+Thread #0
+Thread #2
+Thread #3
+Thread #1</code>
+			<p>
+			Relaxed memory order is the weakest ordering. All atomics guarantee this. That's why atomics can claim to be atomic operations that are free of data races.
+			<p>
+			<span class="article_navigation"><a href="what_mem_order.html">&lt Atomics: What Is Memory Order?</a> | <a href="release_consume_mem_order.html">Atomics: Release-Consume Memory Order &gt</a></span>
+			</div>
+	</body>
+</html>

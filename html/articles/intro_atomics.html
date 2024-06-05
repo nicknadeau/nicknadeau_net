@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Introduction To Atomics</title>
+		<meta name="description" content="Nick Nadeau's article: Introduction To Atomics">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<link href="https://fonts.googleapis.com/css?family=Montserrat:100" rel="stylesheet">
+		<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css", rel="stylesheet">
+		<link href="../styles/style.css" rel="stylesheet">
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+		<script src="//cdnjs.cloudflare.com/ajax/libs/highlightjs-line-numbers.js/2.8.0/highlightjs-line-numbers.min.js"></script>
+		<script>hljs.highlightAll(); hljs.initLineNumbersOnLoad();</script>
+	</head>
+	<body>
+		<div id="name" class="title">Nick Nadeau</div>
+		<div id="links" class="links">
+			<span id="about-link" class="link"><a href="../index.html">About</a></span>
+			|
+			<span id="github-link" class="link"><a href="https://github.com/nicknadeau">Github</a></span>
+			|
+			<span id="articles-link" class="link"><a href="../articles.html">Articles</a></span>
+		</div>
+		<div id="article-title" class="article_title">Introduction To Atomics</div>
+		<div id="body" class="article_body">
+			An atomic operation is one which appears to an external observer as if it either fully completed or never happened. Contrast this with a non-atomic operation, which may appear as if it never happened, fully completed, or has partially completed (the operation is still in progress). Here "operation" may be a sequence of multiple actions.
+			<p>
+			A mutex turns the block of code within its bounds into a single atomic operation from the point of view of another thread. Since all a mutex does is define the boundaries of the operation, its power lies in its versatility. It does not matter what the instructions are inside its bounds or how many there are - the mutex flattens them into an atomic operation.
+			<p>
+			The downside is a mutex can be expensive and there are times when it is overkill. A mutex also opens you up to problems like deadlock and other issues.
+			<p>
+			There is another option, though - atomics. We have had atomics since C11. Modern processors provide hardware capabilities to help implement atomics. There are a handful of atomic operations that are provided by the atomic library for common use-cases such as reading and writing to a variable, compare and swap, addition, subtraction, and certain bitwise operations. <a href="https://en.cppreference.com/w/c/thread">C Concurrent Support Library Docs</a> is a good place to start.
+			<p>
+			Let's take a look at how we can transform the following mutex-based code (taken from my article <a href="what_mutual_exclusion.html">What Is Mutual Exclusion?</a>) into atomic-based code:
+			<p>
+			<pre><code class="language-c">#include &ltstdio.h&gt
+#include &ltstdint.h&gt
+#include &ltpthread.h&gt
+
+static pthread_mutex_t lock;
+static uint32_t count = 0;
+
+
+static void *increment(void *arg) {
+	for (int i = 0; i < 1000000; i++) {
+		pthread_mutex_lock(&lock);
+		count += 1;
+		pthread_mutex_unlock(&lock);
+	}
+	return NULL;
+}
+
+int main(int argc, const char **argv) {
+	pthread_t thread1, thread2;
+
+	pthread_mutex_init(&lock, NULL);
+
+	pthread_create(&thread1, NULL, increment, NULL);
+	pthread_create(&thread2, NULL, increment, NULL);
+
+	pthread_join(thread1, NULL);
+	pthread_join(thread2, NULL);
+
+	printf("Final value of count: %u\n", count);
+
+	return 0;
+}</code></pre>
+			<p>
+			The re-write is trivial. We drop the mutex. We declare the <code>count</code> type as <code>atomic_uint</code> and we use <code>atomic_fetch_add</code> to perform the increment. Actually, this function will return the old value of the variable and add the new quantity to it all as a single atomic operation, but we don't care about the old value so we ignore what's returned:
+			<pre><code class="language-c">#include &ltstdio.h&gt
+#include &ltstdatomic.h&gt
+#include &ltpthread.h&gt
+
+static atomic_uint count = 0;
+
+
+static void *increment(void *arg) {
+	for (int i = 0; i < 1000000; i++) {
+		atomic_fetch_add(&count, 1);
+	}
+	return NULL;
+}
+
+int main(int argc, const char **argv) {
+	pthread_t thread1, thread2;
+
+	pthread_create(&thread1, NULL, increment, NULL);
+	pthread_create(&thread2, NULL, increment, NULL);
+
+	pthread_join(thread1, NULL);
+	pthread_join(thread2, NULL);
+
+	printf("Final value of count: %u\n", count);
+
+	return 0;
+}</code></pre>
+			<p>
+			If we put this into a file named <code>atomic.c</code>, we can compile and run it and verify it works as expected:
+			<code class="terminal">$ gcc -Wall -o atomic atomic.c -lpthread
+$ ./atomic 
+Final value of count: 2000000
+$ ./atomic 
+Final value of count: 2000000
+$ ./atomic 
+Final value of count: 2000000
+$ ./atomic 
+Final value of count: 2000000
+$ ./atomic 
+Final value of count: 2000000
+			</code>
+			<p>
+			The <code>stdatomic.h</code> header defines atomic types for all of the "primitives". By primitive, I don't mean a C primitive, but rather any basic type that can be represented with a single data word (on <code>x86-64</code> that's 64 bits). Peeking inside <code>stdatomic.h</code>, you'll see the atomic primitives are typedefs of the primitive type prefixed with the <code>_Atomic</code> keyword:
+			<code class="terminal">$ find /usr/ -name stdatomic.h
+/usr/lib/gcc/x86_64-linux-gnu/9/include/stdatomic.h
+/usr/lib/gcc/x86_64-linux-gnu/7/include/stdatomic.h
+$ cat /usr/lib/gcc/x86_64-linux-gnu/9/include/stdatomic.h
+...
+typedef _Atomic _Bool atomic_bool;
+typedef _Atomic char atomic_char;
+typedef _Atomic signed char atomic_schar;
+typedef _Atomic unsigned char atomic_uchar;
+...
+			</code>
+			<p>
+			The <code>_Atomic</code> keyword is a C type specifier. It's not just meaningless syntactic sugar to hint to the compiler or communicate intent. It has a real effect on the program in that <code>_Atomic</code> variables are free of data races. A data race happens when two threads are performing conflicting operations on the same variable, such as reading and a writing. For non-atomic types, the behaviour of those two conflicting operations is undefined. They may happen one before the other, but it is also possible one operation sees the other operation partially complete - which is plain nonsense. Atomic variables have a modification order, which means they always have a strict happens-before ordering to them and no partial execution can be witnessed. Hence, their behaviour is well-defined.
+			<p>
+			You might be wondering why that's necessary. Doesn't the <code>atomic_fetch_add</code> operation, or any other <code>atomic_*</code>, ensure that? So couldn't we drop the <code>_Atomic</code> keyword? Actually, built-in operations like <code>++</code> behave atomically when that keyword is set. It's added protection. But, it also means we can declare non-primitive types as atomic too:
+			<p>
+			<pre><code class="language-c">#include &ltstdio.h&gt
+#include &ltstdint.h&gt
+#include &ltstdatomic.h&gt
+
+typedef struct foo {
+	uint32_t a;
+	uint32_t b;
+} foo_t;
+
+
+int main(int argc, const char **argv) {
+	_Atomic foo_t foo;
+
+	foo_t newFoo = {
+		.a = 1,
+		.b = 2,
+	};
+	atomic_store(&foo, newFoo);
+
+	foo_t fooResult = atomic_load(&foo);
+
+	printf("foo{ a=%u, b=%u }\n", fooResult.a, fooResult.b);
+
+	return 0;
+}</code></pre>
+			<p>
+			Here we declare <code>foo_t</code> as atomic and set <code>foo</code> equal to the value of <code>newFoo</code>. We then read it back into the variable <code>fooResult</code>. It's a bit cumbersome, though it does the job:
+			<code class="terminal">$ gcc -Wall -o atomic atomic.c
+nick /home/nick/Desktop/github/nicknadeau_net new$ ./atomic
+foo{ a=1, b=2 }
+			</code>
+			<p>
+			But something weird happens if we add an extra field to <code>foo_t</code>:
+			<pre><code class="language-c">#include &ltstdio.h&gt
+#include &ltstdint.h&gt
+#include &ltstdatomic.h&gt
+
+typedef struct foo {
+	uint32_t a;
+	uint32_t b;
+	char c;
+} foo_t;
+
+
+int main(int argc, const char **argv) {
+	_Atomic foo_t foo;
+
+	foo_t newFoo = {
+		.a = 1,
+		.b = 2,
+		.c = 'a',
+	};
+	atomic_store(&foo, newFoo);
+
+	foo_t fooResult = atomic_load(&foo);
+
+	printf("foo{ a=%u, b=%u, c=%c }\n", fooResult.a, fooResult.b, fooResult.c);
+
+	return 0;
+}</code></pre>
+			<p>
+			If we try to compile we get a seemingly bizarre error:
+			<p>
+			<code class="terminal">$ gcc -Wall -o atomic atomic.c 
+/usr/bin/ld: /tmp/ccOAaBU5.o: in function `main':
+atomic.c:(.text+0x6b): undefined reference to `__atomic_store'
+/usr/bin/ld: atomic.c:(.text+0x8d): undefined reference to `__atomic_load'
+collect2: error: ld returned 1 exit status
+			</code>
+			<p>
+			This looks odd. We were using <code>atomic_store</code> and <code>atomic_load</code> just fine before. How come now the compiler can't find their definitions?
+			<p>
+			Recall that hardware support on <code>x86-64</code> provides atomicity on variables that fit within a data word (64 bits). The size of our previous struct was exactly 64 bits because it consisted of two 32-bit fields. The <code>char</code> pushes us past the word boundary. This means our type no longer has the simple support found in the <code>stdatomic.h</code> header. We need to link against the atomic library to find the definition for a load and store that can operate on our larger struct:
+			<p>
+			<code class="terminal">$ gcc -Wall -o atomic atomic.c -latomic
+$ ./atomic 
+foo{ a=1, b=2, c=a }
+			</code>
+			<p>
+			But how is atomicity implemented for larger variables like this? It's simple: a mutex. That's right, the <code>_Atomic</code> keyword and <code>atomic_*</code> functions can feel a little misleading in this context, since under the hood we are back to relying on the flexibility of the mutex.
+			<p>
+			But don't take my word for it:
+			<p>
+			<code class="terminal">$ gcc -Wall -g -o atomic atomic.c -latomic
+$ objdump -d atomic
+00000000000011a9 &ltmain&gt:
+    ...
+    1208:       e8 a3 fe ff ff          callq  10b0 &lt__atomic_store@plt&gt
+    ...
+    122a:       e8 51 fe ff ff          callq  1080 &lt__atomic_load@plt&gt
+    ...
+
+0000000000001080 &lt__atomic_load@plt&gt:
+    1080:       f3 0f 1e fa             endbr64
+    1084:       f2 ff 25 2d 2f 00 00    bnd jmpq *0x2f2d(%rip)        # 3fb8 &lt__atomic_load@LIBATOMIC_1.0&gt
+    108b:       0f 1f 44 00 00          nopl   0x0(%rax,%rax,1)
+
+00000000000010b0 &lt__atomic_store@plt&gt:
+    10b0:       f3 0f 1e fa             endbr64
+    10b4:       f2 ff 25 15 2f 00 00    bnd jmpq *0x2f15(%rip)        # 3fd0 &lt__atomic_store@LIBATOMIC_1.0&gt
+    10bb:       0f 1f 44 00 00          nopl   0x0(%rax,%rax,1)
+			</code>
+			<p>
+			Here we see our main function calls <code>lt__atomic_store@plt</code> (and the load counterpart). And those call <code>lt__atomic_store@LIBATOMIC_1.0</code> (and the load counterpart).
+			<p>
+			If we track down the shared library, we indeed see the mutex:
+			<code class="terminal">$ find /usr/ -name libatomic.so
+/usr/lib/gcc/x86_64-linux-gnu/9/libatomic.so
+/usr/lib/gcc/x86_64-linux-gnu/7/libatomic.so
+
+$ objdump -d /usr/lib/gcc/x86_64-linux-gnu/9/libatomic.so
+0000000000002180 &lt__atomic_load@@LIBATOMIC_1.0-0xc0&gt:
+    2180:       48 8d 3d e9 5e 00 00    lea    0x5ee9(%rip),%rdi        # 8070 &lt__atomic_test_and_set_16@@LIBATOMIC_1.0+0x3f00&gt
+    2187:       48 8d 05 e2 5e 00 00    lea    0x5ee2(%rip),%rax        # 8070 &lt__atomic_test_and_set_16@@LIBATOMIC_1.0+0x3f00&gt
+    218e:       48 39 f8                cmp    %rdi,%rax
+    2191:       74 15                   je     21a8 &ltpthread_mutex_lock@plt+0x38&gt
+    2193:       48 8b 05 46 5e 00 00    mov    0x5e46(%rip),%rax        # 7fe0 &lt__atomic_test_and_set_16@@LIBATOMIC_1.0+0x3e70&gt
+    219a:       48 85 c0                test   %rax,%rax
+    219d:       74 09                   je     21a8 &ltpthread_mutex_lock@plt+0x38&gt
+    ...
+			</code>
+			<p>
+			<span class="article_navigation"><a href="what_mutual_exclusion.html">&lt What Is Mutual Exclusion?</a> | <a href="what_mem_order.html">Atomics: What Is Memory Order? &gt</a></span>
+			</div>
+	</body>
+</html>
